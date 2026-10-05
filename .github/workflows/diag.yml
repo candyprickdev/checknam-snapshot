@@ -4,24 +4,59 @@ permissions: { contents: write }
 jobs:
   get:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
+      - uses: actions/checkout@v4
+        with: { ref: diag }
       - run: |
-          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();await pg.setViewport({width:390,height:900});
-          const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,4000));
-          const r=await pg.evaluate(async()=>{const o={};
-            const T=async(u)=>{const t0=Date.now();try{const g=await fetch(u);const tx=await g.text();return {s:g.status,ms:Date.now()-t0,c:g.headers.get('x-cache'),b:tx.slice(0,260)};}catch(e){return {err:String(e)}}};
-            for(const u of ['/api/zv?days=1','/api/snap','/api/tw/rain_24h_graph?station_id=26','/api/tw/waterlevel_graph?station_type=tele_waterlevel&station_id=26&start_date=2026-09-29&end_date=2026-10-06','/zb/862.json','/og/862.jpg','/version.json']) o[u]=await T(u);
-            return o;});
-          await pg.goto('https://checknam.com/z/862',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
-          r.z862=await pg.evaluate(()=>({zone:document.getElementById('hZone')?.textContent, alert:document.getElementById('alert')?.innerText.slice(0,600), rain:document.getElementById('rainBox')?.innerText.slice(0,500), up:document.getElementById('upBox')?.innerText.slice(0,200), opts:document.getElementById('place')?.options.length}));
-          r.errs=errs;
-          await pg.screenshot({path:'z862.png'});
-          require('fs').writeFileSync('out.json',JSON.stringify(r,null,1));await b.close();})();
-          JS
-          node t.js || echo fail > out.json
-          rm -rf node_modules package*.json t.js
+          mkdir d; cp rnames.json d/; cd d
+          UP=https://api-v3.thaiwater.net/api/v1/thaiwater30/public/; UA="checknam.com (+https://checknam.com)"
+          curl -s -m 90 -A "$UA" -o wl.json "${UP}waterlevel_load"; sleep 3
+          curl -s -m 120 -A "$UA" -o rain.json "${UP}rain_24h"; sleep 3
+          curl -s -m 90 -A "$UA" -o main.json "${UP}thailand_main"
+          python3 - <<'PY'
+          import json
+          m=json.load(open('main.json'))
+          names=sorted({(x.get('dam') or {}).get('dam_name',{}).get('th','') for x in (m.get('dam',{}).get('data',{}).get('data') or [])})
+          json.dump(names,open('dams.json','w'),ensure_ascii=False)
+          print('dams',len(names))
+          PY
+          rm main.json
+          Q='[out:json][timeout:900];area["ISO3166-1"="TH"][admin_level=2]->.a;(way["waterway"="river"]["name"](area.a););out geom;'
+          curl -s -m 900 --data-urlencode "data=$Q" https://overpass-api.de/api/interpreter -o ov_river.json || true
+          ls -la
+          python3 - <<'PY'
+          import json,re
+          want=set(json.load(open('rnames.json')))
+          Q='[out:json][timeout:900];area["ISO3166-1"="TH"][admin_level=2]->.a;(way["waterway"~"^(canal|stream|drain)$"]["name"~"^('+'|'.join(re.escape(n) for n in sorted(want))+')$"](area.a););out geom;'
+          open('q2.txt','w').write(Q)
+          PY
+          curl -s -m 900 --data-urlencode "data@q2.txt" https://overpass-api.de/api/interpreter -o ov_other.json || true
+          python3 - <<'PY'
+          import json,math
+          def dp(pts,eps):
+            if len(pts)<3: return pts
+            a,b=pts[0],pts[-1]; dx,dy=b[0]-a[0],b[1]-a[1]; L=math.hypot(dx,dy) or 1e-12
+            mi,md=0,0
+            for i in range(1,len(pts)-1):
+              p=pts[i]; d=abs(dy*(p[0]-a[0])-dx*(p[1]-a[1]))/L
+              if d>md: mi,md=i,d
+            if md>eps: return dp(pts[:mi+1],eps)[:-1]+dp(pts[mi:],eps)
+            return [a,b]
+          out={}
+          for f in ['ov_river.json','ov_other.json']:
+            try: j=json.load(open(f))
+            except Exception as e: print('bad',f,e); continue
+            for el in j.get('elements',[]):
+              t=el.get('tags',{}); n=t.get('name:th') or t.get('name'); g=el.get('geometry')
+              if not n or not g: continue
+              pts=[[round(p['lat'],4),round(p['lon'],4)] for p in g]
+              pts=dp(pts,0.0012)
+              if len(pts)>=2: out.setdefault(n,{'w':t.get('waterway'),'l':[]})['l'].append(pts)
+          json.dump(out,open('ovs.json','w'),ensure_ascii=False,separators=(',',':'))
+          print('names',len(out))
+          PY
+          rm -f ov_river.json ov_other.json q2.txt rnames.json
+          gzip -9 wl.json rain.json ovs.json
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
