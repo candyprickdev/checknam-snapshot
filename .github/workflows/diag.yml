@@ -10,28 +10,18 @@ jobs:
         with: { ref: diag }
       - run: |
           mkdir d; cp rnames.json d/; cd d
-          UP=https://api-v3.thaiwater.net/api/v1/thaiwater30/public/; UA="checknam.com (+https://checknam.com)"
-          curl -s -m 90 -A "$UA" -o wl.json "${UP}waterlevel_load"; sleep 3
-          curl -s -m 120 -A "$UA" -o rain.json "${UP}rain_24h"; sleep 3
-          curl -s -m 90 -A "$UA" -o main.json "${UP}thailand_main"
-          python3 - <<'PY'
-          import json
-          m=json.load(open('main.json'))
-          names=sorted({(x.get('dam') or {}).get('dam_name',{}).get('th','') for x in (m.get('dam',{}).get('data',{}).get('data') or [])})
-          json.dump(names,open('dams.json','w'),ensure_ascii=False)
-          print('dams',len(names))
-          PY
-          rm main.json
-          Q='[out:json][timeout:900];area["ISO3166-1"="TH"][admin_level=2]->.a;(way["waterway"="river"]["name"](area.a););out geom;'
-          curl -s -m 900 --data-urlencode "data=$Q" https://overpass-api.de/api/interpreter -o ov_river.json || true
+          Q='[out:json][timeout:900][maxsize:1073741824][bbox:5.6,97.3,20.5,105.7];(way["waterway"="river"]["name"];);out geom;'
+          for EP in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter; do
+            C=$(curl -s -m 900 -A "checknam.com (+https://checknam.com)" --data-urlencode "data=$Q" -o ov_river.json -w "%{http_code}" $EP || echo 000); echo "river $EP $C $(wc -c < ov_river.json)" | tee -a log.txt; [ "$C" = 200 ] && break; sleep 20; done
           ls -la
           python3 - <<'PY'
           import json,re
           want=set(json.load(open('rnames.json')))
-          Q='[out:json][timeout:900];area["ISO3166-1"="TH"][admin_level=2]->.a;(way["waterway"~"^(canal|stream|drain)$"]["name"~"^('+'|'.join(re.escape(n) for n in sorted(want))+')$"](area.a););out geom;'
+          Q='[out:json][timeout:900][maxsize:1073741824][bbox:5.6,97.3,20.5,105.7];(way["waterway"~"^(canal|stream|drain)$"]["name"~"^('+'|'.join(re.escape(n) for n in sorted(want))+')$"];);out geom;'
           open('q2.txt','w').write(Q)
           PY
-          curl -s -m 900 --data-urlencode "data@q2.txt" https://overpass-api.de/api/interpreter -o ov_other.json || true
+          for EP in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter; do
+            C=$(curl -s -m 900 -A "checknam.com (+https://checknam.com)" --data-urlencode "data@q2.txt" -o ov_other.json -w "%{http_code}" $EP || echo 000); echo "other $EP $C $(wc -c < ov_other.json)" | tee -a log.txt; [ "$C" = 200 ] && break; sleep 20; done
           python3 - <<'PY'
           import json,math
           def dp(pts,eps):
@@ -56,7 +46,7 @@ jobs:
           json.dump(out,open('ovs.json','w'),ensure_ascii=False,separators=(',',':'))
           print('names',len(out))
           PY
-          rm -f ov_river.json ov_other.json q2.txt rnames.json
-          gzip -9 wl.json rain.json ovs.json
+          head -c 600 ov_river.json > ov_head.txt; rm -f ov_river.json ov_other.json q2.txt rnames.json
+          gzip -9 ovs.json
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
