@@ -4,11 +4,24 @@ permissions: { contents: write }
 jobs:
   get:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-        with: { ref: diag }
       - run: |
-          mkdir -p d; python3 gen-dwr.py d/dwrst.json; cd d
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();await pg.setViewport({width:390,height:900});
+          const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,4000));
+          const r=await pg.evaluate(async()=>{const o={};
+            const T=async(u)=>{try{const g=await fetch(u);const tx=await g.text();return {s:g.status,c:g.headers.get('x-cache'),b:tx.slice(0,220)};}catch(e){return {err:String(e)}}};
+            for(const u of ['/api/zv?days=1','/api/zv?days=all','/api/dwr','/api/snap','/api/tw/rain_24h_graph?station_id=26','/api/tw/waterlevel_graph?station_type=tele_waterlevel&station_id=26&start_date=2026-09-30&end_date=2026-10-06','/api/status']) o[u]=await T(u);
+            return o;});
+          const zones={'/z/1':'บางใหญ่','/z/650':'เชียงใหม่','/z/862':'หาดใหญ่','/z/582':'อุดร'};
+          for (const [u] of Object.entries(zones)){ await pg.goto('https://checknam.com'+u,{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,18000));
+            r[u]=await pg.evaluate(()=>({zone:document.getElementById('hZone')?.textContent, n:typeof DATA!=='undefined'?DATA.length:0, dwr:typeof DWR_N!=='undefined'?DWR_N:null, alert:document.getElementById('alert')?.innerText.slice(0,260), st:document.getElementById('nbiCards')?.innerText.slice(0,160), rain:document.getElementById('rainBox')?.innerText.slice(0,200), chain:document.getElementById('chainT')?.textContent})); }
+          r.errs=errs;
+          require('fs').writeFileSync('out.json',JSON.stringify(r,null,1));await b.close();})();
+          JS
+          node t.js || echo fail > out.json
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
