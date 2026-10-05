@@ -4,49 +4,45 @@ permissions: { contents: write }
 jobs:
   get:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
         with: { ref: diag }
       - run: |
+          sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq osmium-tool >/dev/null
           mkdir d; cp rnames.json d/; cd d
-          Q='[out:json][timeout:900][maxsize:1073741824][bbox:5.6,97.3,20.5,105.7];(way["waterway"="river"]["name"];);out geom;'
-          for EP in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter; do
-            C=$(curl -s -m 900 -A "checknam.com (+https://checknam.com)" --data-urlencode "data=$Q" -o ov_river.json -w "%{http_code}" $EP || echo 000); echo "river $EP $C $(wc -c < ov_river.json)" | tee -a log.txt; [ "$C" = 200 ] && break; sleep 20; done
+          curl -s -L -m 1200 -o th.pbf https://download.geofabrik.de/asia/thailand-latest.osm.pbf; ls -la th.pbf
+          osmium tags-filter th.pbf w/waterway=river,canal,stream -o ww.pbf --overwrite
+          osmium export ww.pbf -f geojsonseq -o ww.geojsonseq --overwrite --geometry-types=linestring
           ls -la
           python3 - <<'PY'
-          import json,re
-          want=set(json.load(open('rnames.json')))
-          Q='[out:json][timeout:900][maxsize:1073741824][bbox:5.6,97.3,20.5,105.7];(way["waterway"~"^(canal|stream|drain)$"]["name"~"^('+'|'.join(re.escape(n) for n in sorted(want))+')$"];);out geom;'
-          open('q2.txt','w').write(Q)
-          PY
-          for EP in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter; do
-            C=$(curl -s -m 900 -A "checknam.com (+https://checknam.com)" --data-urlencode "data@q2.txt" -o ov_other.json -w "%{http_code}" $EP || echo 000); echo "other $EP $C $(wc -c < ov_other.json)" | tee -a log.txt; [ "$C" = 200 ] && break; sleep 20; done
-          python3 - <<'PY'
           import json,math
+          want=set(json.load(open('rnames.json')))
           def dp(pts,eps):
             if len(pts)<3: return pts
-            a,b=pts[0],pts[-1]; dx,dy=b[0]-a[0],b[1]-a[1]; L=math.hypot(dx,dy) or 1e-12
-            mi,md=0,0
-            for i in range(1,len(pts)-1):
-              p=pts[i]; d=abs(dy*(p[0]-a[0])-dx*(p[1]-a[1]))/L
-              if d>md: mi,md=i,d
-            if md>eps: return dp(pts[:mi+1],eps)[:-1]+dp(pts[mi:],eps)
-            return [a,b]
-          out={}
-          for f in ['ov_river.json','ov_other.json']:
-            try: j=json.load(open(f))
-            except Exception as e: print('bad',f,e); continue
-            for el in j.get('elements',[]):
-              t=el.get('tags',{}); n=t.get('name:th') or t.get('name'); g=el.get('geometry')
-              if not n or not g: continue
-              pts=[[round(p['lat'],4),round(p['lon'],4)] for p in g]
-              pts=dp(pts,0.0012)
-              if len(pts)>=2: out.setdefault(n,{'w':t.get('waterway'),'l':[]})['l'].append(pts)
+            st=[(0,len(pts)-1)]; keep={0,len(pts)-1}
+            while st:
+              i,j=st.pop(); a,b=pts[i],pts[j]; dx,dy=b[0]-a[0],b[1]-a[1]; L=math.hypot(dx,dy) or 1e-12; mi,md=-1,0
+              for k in range(i+1,j):
+                p=pts[k]; d=abs(dy*(p[0]-a[0])-dx*(p[1]-a[1]))/L
+                if d>md: mi,md=k,d
+              if md>eps: keep.add(mi); st+= [(i,mi),(mi,j)]
+            return [pts[k] for k in sorted(keep)]
+          out={}; n=0
+          for line in open('ww.geojsonseq'):
+            line=line.strip().lstrip('\x1e')
+            if not line: continue
+            f=json.loads(line); t=f.get('properties',{}); nm=t.get('name:th') or t.get('name')
+            if not nm: continue
+            w=t.get('waterway')
+            if w!='river' and nm not in want: continue
+            pts=[[round(c[1],4),round(c[0],4)] for c in f['geometry']['coordinates']]
+            pts=dp(pts,0.0012)
+            if len(pts)>=2: out.setdefault(nm,{'w':w,'l':[]})['l'].append(pts); n+=1
           json.dump(out,open('ovs.json','w'),ensure_ascii=False,separators=(',',':'))
-          print('names',len(out))
+          print('names',len(out),'ways',n)
           PY
-          head -c 600 ov_river.json > ov_head.txt; rm -f ov_river.json ov_other.json q2.txt rnames.json
-          gzip -9 ovs.json
+          rm -f th.pbf ww.pbf ww.geojsonseq rnames.json
+          ls -la; gzip -9 ovs.json
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
