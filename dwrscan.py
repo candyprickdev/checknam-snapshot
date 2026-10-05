@@ -19,3 +19,13 @@ for p, body in []:
         except Exception: res[p + " " + json.dumps(body)] = [str(e)[:200]]
 st, b = get(B + "/api/public/reportCurrentStatus/getCurrentStatus", data=b"{}", ct="application/json")
 open("d/dwr.json", "w").write(b)
+
+d = {}
+sid = "98e9fef4-8968-485a-ad69-b7e02fb349b1"
+for path in [f"public/station/{sid}", f"public/station/{sid}?infoType=WL", f"public/station/{sid}?infoType=STATION", f"public/station/{sid}/WL", f"public/station/graph/{sid}?infoType=WL"]:
+    try:
+        st, b = get(B + "/api/" + path); d[path] = [st, b[:4000]]
+    except Exception as e:
+        try: d[path] = [str(e)[:80], e.read().decode()[:400]]
+        except Exception: d[path] = [str(e)[:200]]
+json.dump(d, open("d/detail.json", "w"), ensure_ascii=False, indent=1)
