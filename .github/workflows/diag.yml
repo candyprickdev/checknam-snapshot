@@ -7,10 +7,6 @@ jobs:
     steps:
       - run: |
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          UP=https://api-v3.thaiwater.net/api/v1/thaiwater30/public/
-          for p in rain_1h rain_today rain_3h "rain_24h_graph?station_id=1" "rain_1h?province_code=12" "rainfall_1h" "rain_last_1h" "rain_load" "rain_24h?province_code=12" "rain_graph?station_id=1" "waterlevel_load?province_code=12" "rainfall_24h"; do
-            f=$(echo "$p" | tr '?=&/' '____'); c=$(curl -s -m 40 -A "checknam.com diag (+https://checknam.com)" -o "p_$f.json" -w "%{http_code}" "$UP$p"); echo "$p $c $(wc -c < p_$f.json)" >> probe.txt; head -c 1500 "p_$f.json" > "p_$f.head"; rm "p_$f.json"; sleep 2
-          done
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();
           await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,4000));
