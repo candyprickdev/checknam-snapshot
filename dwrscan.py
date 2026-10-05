@@ -13,15 +13,16 @@ ctx = {}
 for c in chunks:
     try: _, t = get(B + c)
     except Exception: continue
-    for key in ["public/teleMap", "public/reportCurrentStatus", "public/station", "public/report/hour"]:
+    for key in ["public/reportCurrentStatus", "public/report/hour", "getCurrentStatus(", "getWL", "getRF("]:
         for m in re.finditer(re.escape(key), t):
-            ctx.setdefault(key, []).append(c.split("/")[-1] + " :: " + t[max(0, m.start() - 300):m.end() + 300])
+            ctx.setdefault(key, []).append(c.split("/")[-1] + " :: " + t[max(0, m.start() - 1500):m.end() + 2500])
 json.dump(ctx, open("d/ctx.json", "w"), ensure_ascii=False, indent=1)
 res = {}
-for p in ["public/teleMap", "public/reportCurrentStatus", "public/station", "public/dropdown"]:
-    for meth in ["GET", "POST"]:
-        try:
-            st, body = get(B + "/api/" + p, data=(b"{}" if meth == "POST" else None), ct=("application/json" if meth == "POST" else None))
-            res[p + " " + meth] = [st, len(body), body[:800]]
-        except Exception as e: res[p + " " + meth] = [str(e)[:200]]
+for p, body in [("public/reportCurrentStatus/getCurrentStatus", {}), ("public/reportCurrentStatus/getCurrentStatus", {"provinceIds": [], "mainBasinIds": [], "subBasinIds": []}), ("public/report/hour/getRF", {}), ("public/report/hour/getWL", {})]:
+    try:
+        st, b = get(B + "/api/" + p, data=json.dumps(body).encode(), ct="application/json")
+        res[p + " " + json.dumps(body)] = [st, len(b), b[:1500]]
+    except Exception as e:
+        try: res[p + " " + json.dumps(body)] = [str(e)[:100], e.read().decode()[:600]]
+        except Exception: res[p + " " + json.dumps(body)] = [str(e)[:200]]
 json.dump(res, open("d/try.json", "w"), ensure_ascii=False, indent=1)
