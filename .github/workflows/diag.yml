@@ -5,13 +5,9 @@ jobs:
   get:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with: { ref: diag }
       - run: |
-          mkdir d; cd d; UA="checknam.com (+https://checknam.com)"
-          curl -s -m 30 -A "$UA" -L https://telemetry.dwr.go.th/ -o root.html; head -c 3000 root.html > root.head
-          for u in $(grep -oE '(src|href)=["'"'"']?[^"'"'"' >]+\.js' root.html | sed -E 's/^(src|href)=["'"'"']?//' | sort -u | head -10); do case $u in http*) U=$u;; *) U=https://telemetry.dwr.go.th/${u#/};; esac; echo "$U" >> js.txt; curl -s -m 60 "$U" -o b.js; grep -oE '"/?(api/)?public/[A-Za-z0-9/_-]+"|`/?(api/)?public/[A-Za-z0-9/_${}.-]+`' b.js | sort -u >> apis.txt; done
-          BM=$(grep _buildManifest js.txt | head -1); curl -s -m 30 "$BM" -o manifest.js; head -c 4000 manifest.js > manifest.head
-          python3 -c "import re;t=open('manifest.js').read();print('\n'.join(sorted(set(re.findall(r'static/chunks/[^\"\', ]+?\.js',t)))))" > chunks.txt; wc -l chunks.txt
-          for c in $(cat chunks.txt); do curl -s -m 30 "https://telemetry.dwr.go.th/_next/$c" -o b.js; python3 -c "import re,sys;t=open('b.js',errors='ignore').read();[print(sys.argv[1],m) for m in sorted(set(re.findall(r'public/[A-Za-z0-9/_]+',t)))]" "$c" >> apis.txt; done
-          sort -u apis.txt -o apis.txt; wc -l apis.txt; rm -f b.js root.html
+          mkdir -p d; python3 dwrscan.py; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
