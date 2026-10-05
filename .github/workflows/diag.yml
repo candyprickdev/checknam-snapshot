@@ -8,6 +8,6 @@ jobs:
       - uses: actions/checkout@v4
         with: { ref: diag }
       - run: |
-          mkdir -p d; python3 dwrscan.py; cd d
+          mkdir -p d; python3 dwrscan.py; gzip -9 d/dwr.json; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
