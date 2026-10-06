@@ -1,22 +1,9 @@
 name: diag
 on: { push: { branches: [diag] } }
-permissions: { contents: write }
+permissions: { contents: read, actions: write }
 jobs:
-  get:
+  kick:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,4000));
-          const r=await pg.evaluate(async()=>{const o={};const t=new Date(Date.now()+7*36e5).toISOString().slice(0,10),s=new Date(Date.now()+7*36e5-5*864e5).toISOString().slice(0,10);
-            for(const u of ['/api/zv?days=1','/api/zv?days=all','/api/tw/waterlevel_graph?end_date='+t+'&start_date='+s+'&station_id=26&station_type=tele_waterlevel','/api/tw/waterlevel_graph?end_date='+t+'&start_date='+s+'&station_id=1&station_type=tele_waterlevel','/api/tw/rain_24h_graph?station_id=26','/api/tw/rain_24h_graph?station_id=1080983','/api/snap']){try{const g=await fetch(u);const tx=await g.text();let n=null;try{const j=JSON.parse(tx);n=j.top?j.top.length:j.data?(j.data.graph_data||j.data).length:null}catch(e){}
-            o[u]={s:g.status,c:g.headers.get('x-cache'),src:(tx.match(/"src":"[^"]*"/)||[''])[0],len:tx.length,n,title:(tx.match(/<title>([^<]*)/)||[])[1],b:tx.slice(0,160),txt:tx.replace(/<script[\s\S]*?<\/script>/g,'').replace(/<style[\s\S]*?<\/style>/g,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,900),h:[...g.headers].map(x=>x.join(':')).join(' | ')};}catch(e){o[u]={err:String(e)}}}
-            return o;});
-          require('fs').writeFileSync('out.json',JSON.stringify(r,null,1));await b.close();})();
-          JS
-          node t.js || echo fail > out.json
-          rm -rf node_modules package*.json t.js
-          git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
+      - run: gh workflow run snapshot.yml --ref main -R "${{ github.repository }}"
+        env: { GH_TOKEN: "${{ github.token }}" }
