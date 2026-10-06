@@ -8,14 +8,13 @@ jobs:
       - run: |
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();
-          await pg.setViewport({width:390,height:844,deviceScaleFactor:2,isMobile:true,hasTouch:true});
-          await pg.goto('https://checknam.com/z/862',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          await pg.evaluate(()=>{const a=[...document.querySelectorAll('a[href="#s-fac"]')].pop(); a&&a.click();}); await new Promise(r=>setTimeout(r,12000));
-          const info=await pg.evaluate(()=>{const b=document.getElementById('rainBox');b.scrollIntoView();return {txt:b.innerText.slice(0,600),rainH:document.getElementById('rainH')?.innerText.slice(0,300),tabs:[...document.querySelectorAll('nav a,nav button')].map(e=>e.innerText.trim()+'>'+(e.getAttribute('href')||e.dataset.t||'')).slice(0,14)}});
-          await new Promise(r=>setTimeout(r,1500));
-          try{const el=await pg.$('#rainBox'); await el.screenshot({path:'rain.png'});}catch(e){info.shotErr=String(e)}
-          require('fs').writeFileSync('out.json',JSON.stringify(info,null,1));await b.close();})();
+          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          for(const z of [163,162,164]){const pg=await b.newPage();await pg.setViewport({width:1280,height:900});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+            await pg.goto('https://checknam.com/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,30000));
+            out[z]=await pg.evaluate(()=>{const rc=riskCore();const near=(rc.inRAll||[]).map(d=>({n:d.station.tele_station_name.th,r:d.river_name,km:+km(d).toFixed(1),p:d.storage_percent,t:d.waterlevel_datetime,src:d.src||'tw',stale:isStale(d)}));
+              return {L:rc.L&&rc.L.name,score:rc.score,mx:rc.mx&&rc.mx.station.tele_station_name.th,f:rc.f.map(x=>x.t+': '+x.v+' ('+x.s+') '+String(x.d||'').slice(0,160)),near,alert:document.getElementById('alert').innerText.slice(0,900),radius}});
+            out[z].errs=errs; await pg.close();}
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
           rm -rf node_modules package*.json t.js
