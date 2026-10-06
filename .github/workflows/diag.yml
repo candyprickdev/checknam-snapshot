@@ -1,9 +1,13 @@
 name: diag
 on: { push: { branches: [diag] } }
-permissions: { contents: read, actions: write }
+permissions: { contents: write }
 jobs:
-  kick:
+  get:
     runs-on: ubuntu-latest
     steps:
-      - run: gh workflow run snapshot.yml --ref main -R "${{ github.repository }}"
-        env: { GH_TOKEN: "${{ github.token }}" }
+      - run: |
+          mkdir d; cd d
+          for u in "https://checknam.com/" "https://checknam.com/?v=2" "https://checknam.com/z/862"; do echo "== $u" >> out.txt; curl -s -A "facebookexternalhit/1.1" "$u" | grep -o 'og:image" content="[^"]*"' >> out.txt; done
+          curl -s -o /dev/null -w "og3 %{http_code} %{content_type} %{size_download}\n" https://checknam.com/og3.png >> out.txt
+          git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
