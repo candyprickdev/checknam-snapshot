@@ -3,7 +3,7 @@
 name: snapshot
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "3-58/5 * * * *"  # เลี่ยงนาทีที่ 0 และ 5 ซึ่งคิวของ GitHub แน่นที่สุด
   workflow_dispatch:
 concurrency:
   group: snapshot
