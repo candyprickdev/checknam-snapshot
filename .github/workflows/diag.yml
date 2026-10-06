@@ -11,7 +11,7 @@ jobs:
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage();await pg.setViewport({width:1280,height:900});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
           await pg.goto('https://stage.checknam.pages.dev/z/163',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,30000));
-          out.scan=await pg.evaluate(()=>{const keys=Object.keys(PLACES);const na=[];for(const k of keys){const r=zoneRisk(k);if(r&&r.noWL)na.push(k+'|'+PLACES[k][3]);}return {n:keys.length,na:na.length,sample:na.slice(0,40)};});
+          out.scan0=1;out.scan=await pg.evaluate(()=>{const keys=Object.keys(PLACES);const na=[];for(const k of keys){const r=zoneRisk(k);if(r&&r.noWL)na.push(k+'|'+PLACES[k][3]);}return {n:keys.length,na:na.length,sample:na.slice(0,40)};});
           const k=out.scan.sample[0]?out.scan.sample[0].split('|')[0]:null;
           if(k){ out.k=k; out.page=await pg.evaluate(async(k)=>{ const zi=Object.keys(PLACES).indexOf(k)+1; return zi; },k);
             await pg.goto('https://stage.checknam.pages.dev/z/'+out.page,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,30000));
