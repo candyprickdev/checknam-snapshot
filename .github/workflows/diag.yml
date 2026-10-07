@@ -9,11 +9,13 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();await pg.setViewport({width:390,height:844});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/163',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,35000));
-          const ids=await pg.evaluate(()=>{const K=Object.keys(PLACES);const f=n=>K.findIndex(k=>PLACES[k][0]===n)+1;return {bangyai:f('บางใหญ่'),maewong:f('แม่วงก์'),bangkhla:f('บางคล้า'),maechan:f('แม่จัน')};});out.ids=ids;
-          for(const [n,i] of Object.entries(ids)){ if(!i)continue; await pg.goto('https://checknam.com/z/'+i,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-            out[n]=await pg.evaluate(()=>{const a=document.getElementById('alert');const pl=a.querySelector('.ld-pl');const pr=a.querySelector('.prep');return {do:(a.querySelector('.ld-do')||{}).innerText,prep:pr?pr.innerText.slice(0,1800):null,zRef:riskCore().zRef};}); }
+          const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.emulateMediaFeatures([{name:'prefers-color-scheme',value:'light'}]);
+          const th=()=>pg.evaluate(()=>[document.documentElement.dataset.theme||'(none)',localStorage.getItem('nbi_th'),getComputedStyle(document.body).backgroundColor]);
+          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,8000));out.first=await th();
+          await pg.evaluate(()=>document.querySelector('.theme button[data-t=light]').click());await pg.reload({waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,5000));out.afterLight=await th();
+          await pg.goto('https://checknam.com/zones',{waitUntil:'domcontentloaded'});out.zones=await th();
+          await pg.evaluate(()=>localStorage.clear());await pg.goto('https://checknam.com/changelog',{waitUntil:'domcontentloaded'});out.clFresh=await th();
           out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
