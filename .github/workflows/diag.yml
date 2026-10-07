@@ -9,11 +9,10 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for (const [nm,host,w,h] of [['old','https://checknam.com',390,844],['new','https://stage.checknam.pages.dev',390,844],['newd','https://stage.checknam.pages.dev',1280,900]]){ const pg=await b.newPage();await pg.setViewport({width:w,height:h,deviceScaleFactor:2});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-            await pg.goto(host+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,40000));
-            const m=await pg.$('#map'); if(m){ await m.scrollIntoView(); await new Promise(r=>setTimeout(r,3000));
-              out[nm]={errs,t:await pg.evaluate(()=>{const t0=performance.now();drawHeat();return performance.now()-t0;})}; await new Promise(r=>setTimeout(r,1500)); await m.screenshot({path:'map-'+nm+'.png'}); }
-            await pg.close(); }
+          for (const z of ['1','163','743']){ const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));const t0=Date.now();
+            await pg.goto('https://checknam.com/z/'+z+'?d='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+            let ok=false; try{ await pg.waitForFunction(()=>(document.querySelector('#alert .lede')?.innerText||'').length>80 && document.querySelectorAll('#nbiCards .card').length>0,null,{timeout:60000}); ok=true;}catch(e){}
+            out[z]={ok,ms:Date.now()-t0,errs,ver:await pg.evaluate(()=>document.querySelector('script[src*="app-"]')?.src||'')}; await pg.close(); }
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
