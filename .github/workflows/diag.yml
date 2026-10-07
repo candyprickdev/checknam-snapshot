@@ -9,13 +9,11 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.emulateMediaFeatures([{name:'prefers-color-scheme',value:'light'}]);
-          const th=()=>pg.evaluate(()=>[document.documentElement.dataset.theme||'(none)',localStorage.getItem('nbi_th'),getComputedStyle(document.body).backgroundColor]);
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,8000));out.first=await th();
-          await pg.evaluate(()=>document.querySelector('.theme button[data-t=light]').click());await pg.reload({waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,5000));out.afterLight=await th();
-          await pg.goto('https://checknam.com/zones',{waitUntil:'domcontentloaded'});out.zones=await th();
-          await pg.evaluate(()=>localStorage.clear());await pg.goto('https://checknam.com/changelog',{waitUntil:'domcontentloaded'});out.clFresh=await th();
+          const pg=await b.newPage();await pg.setViewport({width:390,height:844});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await pg.evaluate(()=>localStorage.setItem('nbi_design','classic'));
+          await pg.reload({waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,20000));
+          out.st=await pg.evaluate(()=>[document.documentElement.className,(document.getElementById('macos')||{}).media,!!document.querySelector('.dsg'),localStorage.getItem('nbi_design'),document.getElementById('dspPop').innerText.replace(/\s+/g,' ')]);
+          out.sum=await pg.evaluate(()=>!!document.querySelector('#alert .lede'));
           out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
