@@ -9,11 +9,11 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));const tw=[];
-          pg.on('response',r=>{const u=r.url();if(/api\/tw\/(waterlevel_graph|rain_24h_graph)/.test(u))tw.push([r.status(),r.headers()['x-cache'],u.split('?')[1].slice(0,90)]);});
-          await pg.goto('https://checknam.com/z/163',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,40000));
-          out.tw=tw;out.n=await pg.evaluate(()=>[DATA.length,Math.max(...DATA.map(d=>tLocal(d.waterlevel_datetime)))]);out.hc=await pg.evaluate(()=>Object.keys(HCACHE).length);out.trend=await pg.evaluate(()=>{const r=riskCore();return [r.L.name,r.avg24,r.chs.length];});
-          await pg.reload({waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,25000));out.trend2=await pg.evaluate(()=>{const r=riskCore();return [r.L.name,r.avg24,r.chs.length];});
+          const pg=await b.newPage();await pg.setViewport({width:390,height:844});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.goto('https://checknam.com/z/163',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,35000));
+          const ids=await pg.evaluate(()=>{const K=Object.keys(PLACES);const f=n=>K.findIndex(k=>PLACES[k][0]===n)+1;return {bangyai:f('บางใหญ่'),maewong:f('แม่วงก์'),bangkhla:f('บางคล้า'),maechan:f('แม่จัน')};});out.ids=ids;
+          for(const [n,i] of Object.entries(ids)){ if(!i)continue; await pg.goto('https://checknam.com/z/'+i,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
+            out[n]=await pg.evaluate(()=>{const a=document.getElementById('alert');const pl=a.querySelector('.ld-pl');const pr=a.querySelector('.prep');return {do:(a.querySelector('.ld-do')||{}).innerText,prep:pr?pr.innerText.slice(0,1800):null,zRef:riskCore().zRef};}); }
           out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
