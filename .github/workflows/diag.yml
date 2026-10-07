@@ -9,12 +9,13 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();await pg.setViewport({width:390,height:844});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await pg.evaluate(()=>localStorage.setItem('nbi_design','classic'));
-          await pg.reload({waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,20000));
-          out.st=await pg.evaluate(()=>[document.documentElement.className,(document.getElementById('macos')||{}).media,!!document.querySelector('.dsg'),localStorage.getItem('nbi_design'),document.getElementById('dspPop').innerText.replace(/\s+/g,' ')]);
-          out.sum=await pg.evaluate(()=>!!document.querySelector('#alert .lede'));
-          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          for (const [nm,w,h] of [['m',390,844],['d',1280,900]]){ const pg=await b.newPage();await pg.setViewport({width:w,height:h,deviceScaleFactor:2});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+            await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,30000));
+            const el=await pg.$('#s-rain'); if(el){ await el.scrollIntoView(); await new Promise(r=>setTimeout(r,1500));
+              const sv=await pg.$('#rainH svg'); if(sv){ const bb=await sv.boundingBox(); await pg.mouse.move(bb.x+bb.width*0.3,bb.y+bb.height*0.6); await new Promise(r=>setTimeout(r,500)); }
+              await el.screenshot({path:'rain-'+nm+'.png'}); }
+            out[nm]={errs,txt:await pg.evaluate(()=>(document.getElementById('rainBox')||{}).innerText)}; await pg.close(); }
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || echo fail > out.json
           rm -rf node_modules package*.json t.js
