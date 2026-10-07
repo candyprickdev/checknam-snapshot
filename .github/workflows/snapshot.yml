@@ -34,9 +34,16 @@ jobs:
             CODE=$(curl -s -m 60 --retry 2 --retry-delay 5 -A "$UA" -o "t-$k.json" -w "%{http_code}" "$UP$k" || echo 000)
             SIZE=$( [ -f "t-$k.json" ] && wc -c < "t-$k.json" | tr -d ' ' || echo 0)
             if [ "$CODE" = 200 ] && [ "$SIZE" -gt 2000 ]; then
-              if [ "$k" = thailand_main ]; then node trim-dams.js "t-$k.json" t-dams.json && F=t-dams.json && K=dams || { echo "::warning::ตัดข้อมูลเขื่อนไม่สำเร็จ"; continue; }; else F="t-$k.json"; K=$k; fi
-              RES=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/json" --data-binary "@$F" "https://checknam.com/api/snap?k=$K")
-              echo "$K src=$CODE size=$SIZE push=$RES"; case "$RES" in *'"ok":true'*) ;; *) FAIL=1;; esac
+              if [ "$k" = thailand_main ]; then
+                node trim-dams.js "t-$k.json" t-dams.json || { echo "::warning::ตัดข้อมูลเขื่อนไม่สำเร็จ"; FAIL=1; continue; }
+                RES=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/json" --data-binary "@t-dams.json" "https://checknam.com/api/snap?k=dams")
+              else
+                # ตรวจรูปแบบ บีบอัด และแยกค่ารายชั่วโมงที่นี่ เว็บแค่เก็บ ไม่ต้องประมวลผลทั้งก้อน
+                node prep.js "$k" "t-$k.json" || { echo "::warning::$k รูปแบบข้อมูลไม่ถูกต้อง"; FAIL=1; continue; }
+                RES=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/gzip" --data-binary "@t-$k.json.gz" "https://checknam.com/api/snap?k=$k&gz=1")
+                if [ -f "t-$k.json.h.json" ]; then HR=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/json" --data-binary "@t-$k.json.h.json" "https://checknam.com/api/snap?k=$k&h=1"); echo "$k hourly=$HR"; fi
+              fi
+              echo "$k src=$CODE size=$SIZE push=$RES"; case "$RES" in *'"ok":true'*) ;; *) FAIL=1;; esac
             else echo "::warning::$k ดึงจากต้นทางไม่ได้ src=$CODE size=$SIZE"; FAIL=1; fi
           done
           exit $FAIL
