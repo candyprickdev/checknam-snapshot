@@ -16,7 +16,7 @@ jobs:
             walk(FLOW); walk(FLOWM);
             const RST=riverStations(); let att=0; for(const v of RST.values()) att+=v.length;
             const bad=[], noline=[]; let dots=0; for(const d of DATA){ if(!lineOk(d)) continue; dots++; const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; let bc=99, bu=99;
-              for(const [a,b,unc] of segs){ if(Math.abs(a.lat-la)>.02||Math.abs(a.lng-lo)>.02) continue; const ax=(a.lng-lo)*108, ay=(a.lat-la)*111, bx=(b.lng-lo)*108, by=(b.lat-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(unc) bu=Math.min(bu,dd); else bc=Math.min(bc,dd); }
+              for(const [a,b,unc] of segs){ if(Math.min(a.lat,b.lat)-la>.03||la-Math.max(a.lat,b.lat)>.03||Math.min(a.lng,b.lng)-lo>.03||lo-Math.max(a.lng,b.lng)>.03) continue; const ax=(a.lng-lo)*108, ay=(a.lat-la)*111, bx=(b.lng-lo)*108, by=(b.lat-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(unc) bu=Math.min(bu,dd); else bc=Math.min(bc,dd); }
               const row={id:String(d.station.id),n:nm(d),rv:d.river_name||"",col:+bc.toFixed(2),unc:+bu.toFixed(2),note:lineNote(d).replace(/<br>/g,"").slice(0,120)};
               if(bu<=0.3 && bu<bc) bad.push(row); else if(bc>0.3) noline.push(row); }
             const diff=[]; for(const [ri,ids] of RST) for(const id of ids){ const d=DATA.find(x=>String(x.station.id)===id); const r=RIVER_GEO[ri]; if(d.river_name && r.n && !rvSame(d.river_name,r) && !r.u && !r.hy) diff.push([id,nm(d),d.river_name,r.n]); }
