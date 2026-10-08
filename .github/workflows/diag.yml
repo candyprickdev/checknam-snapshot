@@ -6,7 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d; B=https://checknam.com
-          for u in /p/1 /p/2 /p/40 /chaophraya /z/1 /z/500; do echo "== $u $(curl -s -o /dev/null -w '%{http_code}' $B$u)" >> chk.txt; curl -s $B$u | grep -oE '<h1[^>]*>[^<]*</h1>|<p class="lead">[^<]{0,220}|<li><a href="/z/[0-9]+">[^<]*</a><span class="lv">.{0,170}|<li><span><b>[^<]*</b>.{0,200}|<div><span>[^<]*</span><b>[^<]*</b>|"FAQPage".{0,250}|og:title" content="[^"]*' | head -9 >> chk.txt; done
+          mkdir d; cd d
+          echo "key file: $(curl -s https://checknam.com/c59fb8f9e4ed0fafa322718490ccfea2.txt)" >> out.txt
+          curl -s https://checknam.com/sitemap.xml | grep -oE '<loc>[^<]+' | sed 's/<loc>//' > urls.txt; echo "urls: $(wc -l < urls.txt)" >> out.txt
+          python3 -c "import json;u=[l.strip() for l in open('urls.txt') if l.strip()];json.dump({'host':'checknam.com','key':'c59fb8f9e4ed0fafa322718490ccfea2','keyLocation':'https://checknam.com/c59fb8f9e4ed0fafa322718490ccfea2.txt','urlList':u},open('b.json','w'))"
+          echo "indexnow: $(curl -s -o r.txt -w '%{http_code}' -X POST -H 'Content-Type: application/json; charset=utf-8' --data @b.json https://api.indexnow.org/indexnow) $(head -c 300 r.txt)" >> out.txt
+          rm -f b.json urls.txt r.txt
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
