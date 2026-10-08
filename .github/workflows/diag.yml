@@ -15,13 +15,13 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const pg=await b.newPage(); await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
-          const st=await pg.evaluate(()=>DATA.filter(d=>+d.station.tele_station_lat&&+d.station.tele_station_long).map(d=>({id:String(d.station.id),n:nm(d),rv:d.river_name||"",la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,pv:d.geocode?.province_name?.th||"",wl:!isNaN(+d.waterlevel_msl)})));
+          const st=await pg.evaluate(()=>DATA.filter(d=>+d.station.tele_station_lat&&+d.station.tele_station_long).map(d=>({id:String(d.station.id),n:nm(d),rv:d.river_name||"",la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,pv:d.geocode?.province_name?.th||"",wl:!isNaN(+d.waterlevel_msl),note:lineNote(d)})));
           const rv=await pg.evaluate(()=>[...document.scripts].map(s=>s.src).find(s=>/rivers-/.test(s)));
-          require('fs').writeFileSync('st.json',JSON.stringify(st)); require('fs').writeFileSync('rv.txt',rv); await b.close();})();
+          require('fs').writeFileSync('st.json',JSON.stringify(st)); require('fs').writeFileSync('rv.txt',rv); const RST=riverStations(); let a=0; for(const v of RST.values()) a+=v.length; require('fs').writeFileSync('chk.json',JSON.stringify({attached:a})); await b.close();})();
           JS
           node t.js; cd ..
           curl -sSL -o rivers.js "$(cat p/rv.txt)"
           python3 fixlines.py p/st.json rivers.js ww.geojsonseq fix.json > log.txt 2> err.txt || true
-          mkdir d; mv fix.json log.txt err.txt p/st.json d/ ; cd d
+          mkdir d; mv fix.json log.txt err.txt p/st.json p/chk.json d/ ; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
