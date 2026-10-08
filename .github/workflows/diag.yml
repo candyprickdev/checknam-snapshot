@@ -7,6 +7,6 @@ jobs:
     steps:
       - run: |
           mkdir d; cd d
-          curl -s -m 60 -A "checknam-diag/1.0 (+https://checknam.com)" "https://overpass-api.de/api/interpreter" --data-urlencode 'data=[out:json][timeout:50];(way(around:3000,14.320748,100.017395)[waterway];way(around:400,14.320748,100.017395)[highway];way(around:1500,14.320748,100.017395)[natural=water];);out tags geom;' > op.json || true
+          for u in https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter https://overpass-api.de/api/interpreter; do curl -s -m 90 -A "checknam-diag/1.0 (+https://checknam.com)" "$u" --data-urlencode 'data=[out:json][timeout:50];(way(around:3000,14.320748,100.017395)[waterway];way(around:400,14.320748,100.017395)[highway];way(around:1500,14.320748,100.017395)[natural=water];);out tags geom;' > op.json || true; head -c 1 op.json | grep -q '{' && break; sleep 5; done
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
