@@ -5,20 +5,9 @@ jobs:
   get:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
-          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,30000)); { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,8000)); }
-          out.r=await pg.evaluate(()=>{ const segs=[]; RIVER_GEO.forEach((r,ri)=>{ if(r.h) return; for(const l of r.l) for(let i=1;i<l.length;i++) segs.push([l[i-1],l[i],ri]); });
-            const out=[]; for(const d of DATA){ const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; if(!la||!lo) continue; let best=1e9,bi=-1;
-              for(const [a,b,ri] of segs){ if(Math.abs(a[0]-la)>.2||Math.abs(a[1]-lo)>.2) continue; const ax=(a[1]-lo)*108, ay=(a[0]-la)*111, bx=(b[1]-lo)*108, by=(b[0]-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(dd<best){best=dd;bi=ri;} }
-              if(best>0.7) out.push({id:String(d.station.id),n:nm(d),amp:d.geocode?.amphoe_name?.th,pv:d.geocode?.province_name?.th,rv:d.river_name||"",la,lo,km:+best.toFixed(2),near:bi>=0?RIVER_GEO[bi].n:"",wl:!isNaN(+d.waterlevel_msl),lv:mapLv(d),fresh:!isStale(d),miss:RVMISS.has(String(d.station.id))}); }
-            return {total:DATA.length, list:out}; });
-          out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
-          JS
-          node t.js 2> err.txt || true
-          rm -rf node_modules package*.json t.js
+          python3 osmq.py > log.txt 2> err.txt || true
+          mkdir d; mv osm29.json log.txt err.txt d/ ; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
