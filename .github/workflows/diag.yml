@@ -19,9 +19,9 @@ jobs:
           const rv=await pg.evaluate(()=>[...document.scripts].map(s=>s.src).find(s=>/rivers-/.test(s)));
           require('fs').writeFileSync('st.json',JSON.stringify(st)); require('fs').writeFileSync('rv.txt',rv); const RST=riverStations(); let a=0; for(const v of RST.values()) a+=v.length; require('fs').writeFileSync('chk.json',JSON.stringify({attached:a})); await b.close();})();
           JS
-          node t.js; cd ..
+          node t.js 2> ../perr.txt || true; cd ..
           curl -sSL -o rivers.js "$(cat p/rv.txt)"
           python3 fixlines.py p/st.json rivers.js ww.geojsonseq fix.json > log.txt 2> err.txt || true
-          mkdir d; mv fix.json log.txt err.txt p/st.json p/chk.json d/ ; cd d
+          mkdir d; mv fix.json log.txt err.txt perr.txt p/st.json p/chk.json d/ || true ; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
