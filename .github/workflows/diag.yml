@@ -6,7 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d
-          for n in 1 2 100 500 650 927; do curl -s -A "facebookexternalhit/1.1" "https://checknam.com/z/$n?s=0320" | grep -oE '<meta property="og:(title|description|image)" content="[^"]*"' >> og.txt; echo "--" >> og.txt; done
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          for u in https://checknam.com/og/1.jpg "https://checknam.com/og/1.jpg?v=2" https://checknam.com/og6.png https://checknam.com/sitemap.xml; do echo "$u $(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' -A 'facebookexternalhit/1.1' "$u")" >> chk.txt; done
+          echo "sitemap locs: $(curl -s https://checknam.com/sitemap.xml | grep -c '<loc>')" >> chk.txt
+          curl -s https://stage.checknam.pages.dev/z/1 | grep -oE '<h1[^>]*>[^<]*</h1>|<p id="zLine"[^>]*>[^<]*</p>|id="placeName">[^<]*<|class="ht">[^<]*' >> chk.txt
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+          for (const [nm,w,h] of [['m',390,900],['d',1280,900]]){ await pg.setViewport({width:w,height:h,deviceScaleFactor:2}); await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,25000)); await pg.screenshot({path:nm+'.png'}); }
+          const r=await pg.evaluate(()=>({h1:[...document.querySelectorAll('h1')].map(x=>x.textContent), line:document.querySelector('#zLine').textContent}));
+          require('fs').writeFileSync('out.json',JSON.stringify({r,errs},null,1)); await b.close();})();
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
