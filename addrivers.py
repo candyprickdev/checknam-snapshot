@@ -48,6 +48,17 @@ for line in open(ww_path, encoding="utf-8"):
 wg = {}
 for i, w in enumerate(W):
     for c in cells(w["l"]): wg.setdefault(c, []).append(i)
+ends = {}
+for i, w in enumerate(W):
+    for q in (w["l"][0], w["l"][-1]): ends.setdefault((round(q[0],6), round(q[1],6)), []).append(i)
+def chain(i0, maxkm=20):  # ต่อเส้นลำน้ำไม่มีชื่อที่ปลายชนกัน ให้ได้แนวลำน้ำต่อเนื่อง (ไม่เกิน 20 กม.)
+    seen, todo, tot = {i0}, [i0], 0
+    while todo and tot < maxkm:
+        i = todo.pop(0); l = W[i]["l"]; tot += sum(km(l[k-1], l[k]) for k in range(1, len(l)))
+        for q in (l[0], l[-1]):
+            for j in ends.get((round(q[0],6), round(q[1],6)), []):
+                if j not in seen: seen.add(j); todo.append(j)
+    return [W[i]["l"] for i in seen]
 byname = {}
 for i, w in enumerate(W):
     if w["n"]: byname.setdefault(w["n"], []).append(i)
@@ -73,7 +84,7 @@ for s in st:
     else:
         stats["unnamed"] += 1
         key = "u:%d" % wi
-        e = add.setdefault(key, {"n": s["rn"] or "", "o": "", "l": [simplify(w["l"])], "s": [], "_pts": [], "w": w["w"]})
+        e = add.setdefault(key, {"n": s["rn"] or "", "o": "", "l": [simplify(l) for l in chain(wi)], "s": [], "_pts": [], "w": w["w"]})
         e["s"].append(s["id"]); e["_pts"].append(p)
 def cut_old(l):  # ตัดช่วงที่ทับเส้นเดิม (ห่างเส้นเดิมไม่ถึง 0.6 กม.) ไม่วาดซ้ำ
     out, cur = [], []
