@@ -10,8 +10,8 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
-          out.r=await pg.evaluate(async()=>{ document.querySelector('#tFlow').checked=true; MAP.setZoom(11); drawFlow(); await new Promise(r=>setTimeout(r,500));
+          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,30000)); { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,8000)); }
+          out.r=await pg.evaluate(async()=>{ document.querySelector('#tFlow').checked=true; MAP.setZoom(11); drawFlow(); FLOW.addLayer(FLOWM); await new Promise(r=>setTimeout(r,500));
             const segs=[]; const walk=g=>g.eachLayer(l=>{ if(l.eachLayer) return walk(l); if(l.options&&l.options.color==="#8fb7c7"){ const ll=l.getLatLngs(); const arr=Array.isArray(ll[0])?ll:[ll]; for(const line of arr) for(let i=1;i<line.length;i++) segs.push([line[i-1],line[i],l.getTooltip&&l.getTooltip()?String(l.getTooltip().getContent()).slice(0,80):""]); } });
             walk(FLOW); walk(FLOWM);
             const bad=[]; for(const d of DATA){ if(!validPct(d)||isStale(d)) continue; const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; let best=1e9,tt="";
