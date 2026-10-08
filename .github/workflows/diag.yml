@@ -10,8 +10,8 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,45000));
-          out.r=await pg.evaluate(()=>{ const zl=zoneLevels(); const bad=[]; zl.z.forEach((x,i)=>{ if(!x) return; if(!(x[0]>5&&x[0]<200&&x[1]>=1&&x[1]<=5&&typeof x[3]==="string"&&x[3].length<120&&/^\d\d:\d\d$|^$/.test(x[5]))) bad.push([i,x]); }); return {bad:bad.slice(0,15), nbad:bad.length}; });
+          for (const [nm,w,h] of [['m',390,844],['d',1280,800]]){ await pg.setViewport({width:w,height:h,deviceScaleFactor:2}); await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,25000)); await pg.screenshot({path:nm+'.png'}); }
+          out.r=await pg.evaluate(()=>({title:document.title, og:document.querySelector('meta[property="og:title"]').content, img:document.querySelector('meta[property="og:image"]').content, share:shareInfo()}));
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt || true
