@@ -20,7 +20,7 @@ jobs:
             return {ver:(typeof APPV!=="undefined"?APPV:""), nseg:segs.length, bad}; });
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
-          node t.js 2> err.txt
+          node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
