@@ -13,7 +13,8 @@ jobs:
           curl -sSL -o th.pbf https://download.geofabrik.de/asia/thailand-latest.osm.pbf
           osmium tags-filter th.pbf w/waterway=river,stream,canal,drain,ditch -o ww.pbf
           osmium export ww.pbf -f geojsonseq -o ww.geojsonseq --geometry-types=linestring
-          curl -sSL -o hr.zip https://data.hydrosheds.org/file/HydroRIVERS/HydroRIVERS_v10_as_shp.zip && unzip -q hr.zip
+          mkdir -p out; curl -sSL -D out/hr-headers.txt -o hr.zip https://data.hydrosheds.org/file/HydroRIVERS/HydroRIVERS_v10_as_shp.zip; ls -la hr.zip > out/hr-size.txt; file hr.zip >> out/hr-size.txt; head -c 600 hr.zip > out/hr-head.bin
+          if ! unzip -q hr.zip; then echo nozip > out/fail.txt; cd out; git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data; exit 0; fi
           SHP=$(find . -name 'HydroRIVERS_v10_as.shp' | head -1); echo "shp $SHP"
           ogr2ogr -f GeoJSONSeq hr.geojsonseq "$SHP" -spat 97.2 5.4 105.8 20.6 -select HYRIV_ID,NEXT_DOWN,ORD_STRA
           wc -l ww.geojsonseq hr.geojsonseq
@@ -28,6 +29,6 @@ jobs:
           node t.js
           curl -sSL -o OLD.js "$(cat src.txt)"; cat src.txt
           python3 ../addrivers2.py ww.geojsonseq hr.geojsonseq ST.json OLD.js NEW2.json | tee log.txt
-          mkdir out && cp NEW2.json log.txt src.txt out/ && cd out
+          mkdir -p out && cp NEW2.json log.txt src.txt out/ && cd out
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
