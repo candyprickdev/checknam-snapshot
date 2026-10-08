@@ -10,11 +10,14 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
-          out.cov=await pg.evaluate(()=>{const RST=riverStations();let on=0;for(const v of RST.values())on+=v.length;let fresh=0;for(const d of DATA)if(validPct(d)&&!isStale(d))fresh++;return {fresh,attached:on,entries:RST.size};});
-          for (const [nm,amp] of [['wp','วังโป่ง'],['ds','ด่านซ้าย']]){ const zi=await pg.evaluate(a=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]===a)+1,amp);
-            await pg.goto('https://stage.checknam.pages.dev/z/'+zi,{waitUntil:'domcontentloaded'}); await new Promise(r=>setTimeout(r,30000));
-            const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,5000)); await m.screenshot({path:nm+'.png'}); }
+          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
+          out.r=await pg.evaluate(async()=>{ document.querySelector('#tFlow').checked=true; MAP.setZoom(11); drawFlow(); await new Promise(r=>setTimeout(r,500));
+            const segs=[]; const walk=g=>g.eachLayer(l=>{ if(l.eachLayer) return walk(l); if(l.options&&l.options.color==="#8fb7c7"){ const ll=l.getLatLngs(); const arr=Array.isArray(ll[0])?ll:[ll]; for(const line of arr) for(let i=1;i<line.length;i++) segs.push([line[i-1],line[i],l.getTooltip&&l.getTooltip()?String(l.getTooltip().getContent()).slice(0,80):""]); } });
+            walk(FLOW); walk(FLOWM);
+            const bad=[]; for(const d of DATA){ if(!validPct(d)||isStale(d)) continue; const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; let best=1e9,tt="";
+              for(const [a,b,t] of segs){ const ax=(a.lng-lo)*108, ay=(a.lat-la)*111, bx=(b.lng-lo)*108, by=(b.lat-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(dd<best){best=dd;tt=t;} }
+              if(best<=1.5) bad.push({id:d.station.id,n:d.station.tele_station_name?.th,amp:d.geocode?.amphoe_name?.th,rv:d.river_name,p:d.storage_percent,km:+best.toFixed(2),tt}); }
+            return {ver:(typeof APPV!=="undefined"?APPV:""), nseg:segs.length, bad}; });
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt
