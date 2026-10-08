@@ -9,18 +9,11 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,30000)); { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,8000)); }
-          out.r=await pg.evaluate(async()=>{ document.querySelector('#tFlow').checked=true; MAP.setZoom(11); drawFlow(); FLOW.addLayer(FLOWM); await new Promise(r=>setTimeout(r,500));
-            const segs=[]; const walk=g=>g.eachLayer(l=>{ if(l.eachLayer) return walk(l); if(!(l instanceof L.Polyline)||!l.getTooltip||!l.getTooltip()) return; const unc=l.options.color==="#8fb7c7"; const ll=l.getLatLngs(); const arr=Array.isArray(ll[0])?ll:[ll]; for(const line of arr) for(let i=1;i<line.length;i++) segs.push([line[i-1],line[i],unc]); });
-            walk(FLOW); walk(FLOWM);
-            const RST=riverStations(); let att=0; for(const v of RST.values()) att+=v.length;
-            const bad=[], noline=[]; let dots=0; for(const d of DATA){ if(!lineOk(d)) continue; dots++; const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; let bc=99, bu=99;
-              for(const [a,b,unc] of segs){ if(Math.min(a.lat,b.lat)-la>.03||la-Math.max(a.lat,b.lat)>.03||Math.min(a.lng,b.lng)-lo>.03||lo-Math.max(a.lng,b.lng)>.03) continue; const ax=(a.lng-lo)*108, ay=(a.lat-la)*111, bx=(b.lng-lo)*108, by=(b.lat-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(unc) bu=Math.min(bu,dd); else bc=Math.min(bc,dd); }
-              const row={id:String(d.station.id),n:nm(d),rv:d.river_name||"",col:+bc.toFixed(2),unc:+bu.toFixed(2),note:lineNote(d).replace(/<br>/g,"").slice(0,120)};
-              if(bu<=0.3 && bu<bc) bad.push(row); else if(bc>0.3) noline.push(row); }
-            const diff=[]; for(const [ri,ids] of RST) for(const id of ids){ const d=DATA.find(x=>String(x.station.id)===id); const r=RIVER_GEO[ri]; if(d.river_name && r.n && !rvSame(d.river_name,r) && !r.u && !r.hy) diff.push([id,nm(d),d.river_name,r.n]); }
-            return {dots, att, bad, noline, diff}; });
+          const pg=await b.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+          await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,45000));
+          out.r=await pg.evaluate(()=>{ const t0=performance.now(); const zl=zoneLevels(); const ms=performance.now()-t0;
+            const rc=riskCore(); const f0=rc.f? rc.f[0] : null; const here=zoneLevelAt(PLACES[place][1],PLACES[place][2]);
+            return {ms:Math.round(ms), n:zl.z.length, withData:zl.z.filter(x=>x).length, sample:[0,1,2,100,500,927].map(i=>[ZKEYS[i],zl.z[i]]), place, f0v:f0&&f0.v, here:here&&[here.p,here.lv,here.st,here.t], share:shareInfo(), wd:navigator.webdriver, bma:BMA_N, dwr:DWR_N, size:JSON.stringify(zl).length}; });
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt || true
