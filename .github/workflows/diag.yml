@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          python3 osmq.py > log.txt 2> err.txt || true
-          mkdir d; mv osm29.json log.txt err.txt d/ ; cd d
+          python3 chain.py > log.txt 2> err.txt || true
+          mkdir d; mv chain29.json log.txt err.txt d/ ; cd d
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
