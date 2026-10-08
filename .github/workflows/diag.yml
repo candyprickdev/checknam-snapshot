@@ -8,11 +8,21 @@ jobs:
       - run: |
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-          await pg.setViewport({width:390,height:900,deviceScaleFactor:2}); await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,25000));
-          await pg.evaluate(()=>document.querySelector('.zhead').scrollIntoView()); await new Promise(r=>setTimeout(r,800)); await pg.screenshot({path:'m.png'});
-          const r=await pg.evaluate(()=>({links:document.querySelector('#zLinks').innerHTML, chain:document.querySelector('#chainL').innerHTML, foot:[...document.querySelectorAll('.slink')].map(a=>a.textContent+' '+a.getAttribute('href'))}));
-          require('fs').writeFileSync('out.txt', JSON.stringify({r,errs},null,1)); await b.close();})();
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          async function run(name,z,vp,pre,act){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport(vp);
+            if(pre) await pg.evaluateOnNewDocument(pre);
+            await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
+            if(act) await act(pg);
+            await pg.screenshot({path:name+'.png',fullPage:true});
+            out[name]={errs,info:await pg.evaluate(()=>({mode:document.documentElement.dataset.mode,lv:document.querySelector('#easy .ez-lv')?.innerText,say:document.querySelector('#easy .ez-say')?.innerText,tiles:[...document.querySelectorAll('#easy .ez-ti')].map(x=>x.innerText.replace(/\n/g,' | ')),alert:document.querySelector('#alert .lede')?.innerText?.slice(0,200),mapW:document.querySelector('#map')?.clientWidth}))};await pg.close();}
+          const M={width:390,height:844,deviceScaleFactor:2};
+          await run('easy_dark',1,M);
+          await run('easy_light',1,M,()=>{localStorage.setItem('nbi_th','light')});
+          await run('easy_z2',300,M);
+          await run('full_after',1,M,null,async pg=>{await pg.click('#modeBar button[data-m=full]');await new Promise(r=>setTimeout(r,3000));});
+          await run('desk_easy',1,{width:1400,height:900,deviceScaleFactor:1});
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
