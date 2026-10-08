@@ -29,6 +29,8 @@ def core(n):
         if n.startswith(p): n = n[len(p):]
     return n
 ST = json.load(open(st_path, encoding="utf-8"))
+SKIP = {'1106454', '1091551'}
+ST = [s for s in ST if s['id'] not in SKIP]
 t = open(rv_path, encoding="utf-8").read(); GEO = json.loads(t[t.index("["):t.rindex("]")+1])
 RL, RN = [], []
 for g in GEO:
@@ -64,7 +66,7 @@ for s in ST:
         rep.append({**s, "d0": round(d0,2), "n0": n0, "act": "none" if d0 > .7 else "ok"}); continue
     d1 = on[seed]
     # ต้องดีกว่าเส้นเดิมชัดเจน: เส้นเดิมไกลกว่า 0.7 กม. หรือเส้นใหม่ใกล้กว่าอย่างน้อย 0.25 กม. และเส้นเดิมไม่ใช่ลำน้ำชื่อเดียวกันที่อยู่ใกล้อยู่แล้ว
-    better = (d0 > .7 and not (same0 and d0 <= 1.2)) or (d1 + .25 < d0 and d0 > .35 and not (same0 and d0 <= .5))
+    better = (d0 > .7 and not (same0 and d0 <= 1.2)) or (d1 + .25 < d0 and d0 > .35 and not (same0 and d0 <= .5)) or (d1 <= .1 and d0 > .25 and not (same0 and d0 <= .3))
     if not better:
         rep.append({**s, "d0": round(d0,2), "n0": n0, "act": "ok", "d1": round(d1,2)}); continue
     sw = W[seed]; same = (lambda w: w["n"] == sw["n"]) if sw["n"] else (lambda w: not w["n"] and w["w"] == sw["w"])
