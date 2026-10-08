@@ -11,11 +11,9 @@ jobs:
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
           await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,30000)); { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,8000)); }
-          const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='วังโป่ง')+1);
-          await pg.goto('https://checknam.com/z/'+zi,{waitUntil:'domcontentloaded'}); await new Promise(r=>setTimeout(r,30000));
-          { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,6000)); await m.screenshot({path:'wp.png'}); }
-          out.r=await pg.evaluate(()=>{ const b=MAP.getBounds(); const RST=riverStations(), on=new Set(); for(const v of RST.values()) for(const id of v) on.add(id);
-            return {z:MAP.getZoom(), st:DATA.filter(d=>b.contains([+d.station.tele_station_lat,+d.station.tele_station_long])).map(d=>({id:d.station.id,n:d.station.tele_station_name?.th,rv:d.river_name,p:d.storage_percent,valid:validPct(d),stale:isStale(d),att:on.has(String(d.station.id)),la:d.station.tele_station_lat,lo:d.station.tele_station_long,lv:mapLv(d),t:d.waterlevel_datetime}))}; });
+          out.r=await pg.evaluate(()=>{ const RST=riverStations(), on=new Set(); for(const v of RST.values()) for(const id of v) on.add(id);
+            return DATA.filter(d=>/น้ำพุง|กกกะบาก/.test(JSON.stringify(d.station)+d.river_name)).map(d=>({id:d.station.id,n:d.station.tele_station_name?.th,amp:d.geocode?.amphoe_name?.th,rv:d.river_name,p:d.storage_percent,valid:validPct(d),stale:isStale(d),sus:SUSPECT.has(String(d.station.id)),att:on.has(String(d.station.id)),la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,lv:mapLv(d),t:d.waterlevel_datetime})); });
+          for (const [i,s] of out.r.entries()){ await pg.evaluate(s=>{ MAP.setView([s.la,s.lo],12,{animate:false}); },s); await new Promise(r=>setTimeout(r,4000)); const m=await pg.$('#map'); await m.screenshot({path:'np'+i+'.png'}); }
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt || true
