@@ -14,10 +14,10 @@ const p = require("puppeteer-core");
     const j = await pg.evaluate(() => { const zl = zoneLevels(); const rc = riskCore(), here = zoneLevelAt(PLACES[place][1], PLACES[place][2]);
       return { zl, check: [rc.f && rc.f[0] && rc.f[0].v, here && here.p + "%"], src: [DATA.length, DWR_N, BMA_N] }; });
     const n = j.zl.z.filter(x => x).length;
-    console.log(`เขตที่มีข้อมูล ${n}/${j.zl.z.length} · สถานี ${j.src.join("/")} · ตรวจตรงกับข้อมูลสรุป ${j.check.join(" = ")}`);
+    console.log(`::notice::เขตที่มีข้อมูล ${n}/${j.zl.z.length} · สถานี ${j.src.join("/")} · ตรวจตรงกับข้อมูลสรุป ${j.check.join(" = ")}`);
     if (j.check[0] !== j.check[1]) { console.log("::warning::ค่าไม่ตรงกับข้อมูลสรุป ไม่ส่ง"); process.exitCode = 1; return; }
     if (n < 300) { console.log("::warning::เขตที่มีข้อมูลน้อยผิดปกติ ไม่ส่ง"); process.exitCode = 1; return; }
     const r = await fetch("https://checknam.com/api/snap?k=zones", { method: "POST", headers: { "x-key": KEY, "Content-Type": "application/json" }, body: JSON.stringify(j.zl) });
-    console.log("ส่ง", r.status, await r.text()); if (!r.ok) process.exitCode = 1;
-  } finally { await b.close(); }
+    console.log("::notice::ส่ง " + r.status + " " + (await r.text()).slice(0, 200)); if (!r.ok) process.exitCode = 1;
+  } catch (e) { console.log("::error::" + String(e && e.message || e).slice(0, 300)); process.exitCode = 1; } finally { await b.close(); }
 })();
