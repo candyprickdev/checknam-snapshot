@@ -9,19 +9,16 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();await pg.setViewport({width:1280,height:900,deviceScaleFactor:1});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,35000));
-          out.r=await pg.evaluate(()=>{const pts=[];for(const r of RIVER_GEO){if(r.h)continue;for(const l of r.l)for(let i=1;i<l.length;i++)pts.push([l[i-1],l[i]]);}
-            const G=new Map(),C=.05;for(const s of pts){const la0=Math.min(s[0][0],s[1][0]),la1=Math.max(s[0][0],s[1][0]),lo0=Math.min(s[0][1],s[1][1]),lo1=Math.max(s[0][1],s[1][1]);for(let i=Math.floor(la0/C)-1;i<=Math.floor(la1/C)+1;i++)for(let j=Math.floor(lo0/C)-1;j<=Math.floor(lo1/C)+1;j++){const k=i+'_'+j;(G.get(k)||G.set(k,[]).get(k)).push(s);}}
-            const dist=(la,lo)=>{let m=1e9;for(const s of (G.get(Math.floor(la/C)+'_'+Math.floor(lo/C))||[])){const ax=(s[0][1]-lo)*108,ay=(s[0][0]-la)*111,bx=(s[1][1]-lo)*108,by=(s[1][0]-la)*111,vx=bx-ax,vy=by-ay,L=vx*vx+vy*vy;let t=L?-(ax*vx+ay*vy)/L:0;t=t<0?0:t>1?1:t;const d=Math.hypot(ax+vx*t,ay+vy*t);if(d<m)m=d;}return m;};
-            let tot=0,far=0;const bp={};for(const d of DATA){const la=+d.station.tele_station_lat;if(!la)continue;tot++;if(dist(la,+d.station.tele_station_long)>1){far++;const pv=d.geocode?.province_name?.th||'?';bp[pv]=(bp[pv]||0)+1;}}return {tot,far,bp:Object.entries(bp).sort((a,b)=>b[1]-a[1]).slice(0,12)};});
-          out.miss=await pg.evaluate(()=>RVMISS.size); const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='เมืองน่าน')+1);
-          await pg.goto('https://checknam.com/z/'+zi,{waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,30000));
-          const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,5000)); await m.screenshot({path:'nan.png'});
-          out.t=await pg.evaluate(()=>{const t0=performance.now();drawFlow();drawHeat();return performance.now()-t0;});
-          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          const pg=await b.newPage(); await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
+          out.a=await pg.evaluate(()=>{const BYR=new Map(),BYID=new Map();for(const d of DATA){if(!validPct(d)||isStale(d))continue;const q={la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,d};BYID.set(String(d.station.id),q);if(!d.river_name)continue;(BYR.get(d.river_name)||BYR.set(d.river_name,[]).get(d.river_name)).push(q);}
+            const bins={'0-5':0,'5-10':0,'10-15':0,'15-20':0,'20-30':0},rv={};let nodata=0;
+            for(const r of RIVER_GEO){if(r.h)continue;const st=[...new Set([...[...new Set((RGROUP[r.n]||[]).concat(r.n))].flatMap(n=>BYR.get(n)||[]),...(r.s||[]).map(id=>BYID.get(String(id))).filter(Boolean)])];
+              for(const l of r.l)for(let i=1;i<l.length;i++){const a=l[i-1],c=l[i],len=Math.hypot((a[1]-c[1])*108,(a[0]-c[0])*111),la=(a[0]+c[0])/2,lo=(a[1]+c[1])/2;let dm=1e9,bq=null;for(const q of st){const dd=Math.hypot((q.lo-lo)*108,(q.la-la)*111);if(dd<dm){dm=dd;bq=q;}}
+                if(!bq||dm>30){nodata+=len;continue;}const k=dm<=5?'0-5':dm<=10?'5-10':dm<=15?'10-15':dm<=20?'15-20':'20-30';bins[k]+=len;if(dm>15){const key=r.n+' ← '+nm(bq.d);rv[key]=(rv[key]||0)+len;}}}
+            for(const k in bins)bins[k]=Math.round(bins[k]);return {bins,nodata:Math.round(nodata),far:Object.entries(rv).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([k,v])=>[k,Math.round(v)])};});
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
-          node t.js 2> err.txt || echo fail > out.json
+          node t.js 2> err.txt
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
