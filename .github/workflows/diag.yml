@@ -9,14 +9,14 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage(); await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
+          const pg=await b.newPage(); await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,35000));
           out.a=await pg.evaluate(()=>{const BYR=new Map(),BYID=new Map();for(const d of DATA){if(!validPct(d)||isStale(d))continue;const q={la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,d};BYID.set(String(d.station.id),q);if(!d.river_name)continue;(BYR.get(d.river_name)||BYR.set(d.river_name,[]).get(d.river_name)).push(q);}
             const bins={'0-5':0,'5-10':0,'10-15':0,'15-20':0,'20-30':0},rv={};let nodata=0;
             for(const r of RIVER_GEO){if(r.h)continue;const st=[...new Set([...[...new Set((RGROUP[r.n]||[]).concat(r.n))].flatMap(n=>BYR.get(n)||[]),...(r.s||[]).map(id=>BYID.get(String(id))).filter(Boolean)])];
               for(const l of r.l)for(let i=1;i<l.length;i++){const a=l[i-1],c=l[i],len=Math.hypot((a[1]-c[1])*108,(a[0]-c[0])*111),la=(a[0]+c[0])/2,lo=(a[1]+c[1])/2;let dm=1e9,bq=null;for(const q of st){const dd=Math.hypot((q.lo-lo)*108,(q.la-la)*111);if(dd<dm){dm=dd;bq=q;}}
-                if(!bq||dm>30){nodata+=len;continue;}const k=dm<=5?'0-5':dm<=10?'5-10':dm<=15?'10-15':dm<=20?'15-20':'20-30';bins[k]+=len;if(dm>15){const key=r.n+' ← '+nm(bq.d);rv[key]=(rv[key]||0)+len;}}}
+                if(!bq||dm>15){nodata+=len;continue;}const k=dm<=5?'0-5':dm<=10?'5-10':dm<=15?'10-15':dm<=20?'15-20':'20-30';bins[k]+=len;if(dm>15){const key=r.n+' ← '+nm(bq.d);rv[key]=(rv[key]||0)+len;}}}
             for(const k in bins)bins[k]=Math.round(bins[k]);return {bins,nodata:Math.round(nodata),far:Object.entries(rv).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([k,v])=>[k,Math.round(v)])};});
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
+          const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='บางปะกง')+1); await pg.setViewport({width:1280,height:900}); await pg.goto('https://stage.checknam.pages.dev/z/'+zi,{waitUntil:'domcontentloaded'}); await new Promise(r=>setTimeout(r,30000)); const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,5000)); await m.screenshot({path:'bp.png'}); require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt
           rm -rf node_modules package*.json t.js
