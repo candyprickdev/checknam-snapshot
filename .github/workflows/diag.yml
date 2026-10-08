@@ -6,11 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d
-          echo "key file: $(curl -s https://checknam.com/c59fb8f9e4ed0fafa322718490ccfea2.txt)" >> out.txt
-          curl -s https://checknam.com/sitemap.xml | grep -oE '<loc>[^<]+' | sed 's/<loc>//' > urls.txt; echo "urls: $(wc -l < urls.txt)" >> out.txt
-          python3 -c "import json;u=[l.strip() for l in open('urls.txt') if l.strip()];json.dump({'host':'checknam.com','key':'c59fb8f9e4ed0fafa322718490ccfea2','keyLocation':'https://checknam.com/c59fb8f9e4ed0fafa322718490ccfea2.txt','urlList':u},open('b.json','w'))"
-          echo "indexnow: $(curl -s -o r.txt -w '%{http_code}' -X POST -H 'Content-Type: application/json; charset=utf-8' --data @b.json https://api.indexnow.org/indexnow) $(head -c 300 r.txt)" >> out.txt
-          rm -f b.json urls.txt r.txt
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+          await pg.setViewport({width:390,height:900,deviceScaleFactor:2}); await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,25000));
+          await pg.evaluate(()=>document.querySelector('.zhead').scrollIntoView()); await new Promise(r=>setTimeout(r,800)); await pg.screenshot({path:'m.png'});
+          const r=await pg.evaluate(()=>({links:document.querySelector('#zLinks').innerHTML, chain:document.querySelector('#chainL').innerHTML, foot:[...document.querySelectorAll('.slink')].map(a=>a.textContent+' '+a.getAttribute('href'))}));
+          require('fs').writeFileSync('out.txt', JSON.stringify({r,errs},null,1)); await b.close();})();
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
