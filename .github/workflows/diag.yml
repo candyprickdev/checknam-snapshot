@@ -15,7 +15,7 @@ jobs:
             const G=new Map(),C=.05;for(const s of pts){const la0=Math.min(s[0][0],s[1][0]),la1=Math.max(s[0][0],s[1][0]),lo0=Math.min(s[0][1],s[1][1]),lo1=Math.max(s[0][1],s[1][1]);for(let i=Math.floor(la0/C)-1;i<=Math.floor(la1/C)+1;i++)for(let j=Math.floor(lo0/C)-1;j<=Math.floor(lo1/C)+1;j++){const k=i+'_'+j;(G.get(k)||G.set(k,[]).get(k)).push(s);}}
             const dist=(la,lo)=>{let m=1e9;for(const s of (G.get(Math.floor(la/C)+'_'+Math.floor(lo/C))||[])){const ax=(s[0][1]-lo)*108,ay=(s[0][0]-la)*111,bx=(s[1][1]-lo)*108,by=(s[1][0]-la)*111,vx=bx-ax,vy=by-ay,L=vx*vx+vy*vy;let t=L?-(ax*vx+ay*vy)/L:0;t=t<0?0:t>1?1:t;const d=Math.hypot(ax+vx*t,ay+vy*t);if(d<m)m=d;}return m;};
             let tot=0,far=0;const bp={};for(const d of DATA){const la=+d.station.tele_station_lat;if(!la)continue;tot++;if(dist(la,+d.station.tele_station_long)>1){far++;const pv=d.geocode?.province_name?.th||'?';bp[pv]=(bp[pv]||0)+1;}}return {tot,far,bp:Object.entries(bp).sort((a,b)=>b[1]-a[1]).slice(0,12)};});
-          const K=Object.keys(PLACES); out.miss=await pg.evaluate(()=>RVMISS.size); const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='เมืองน่าน')+1);
+          out.miss=await pg.evaluate(()=>RVMISS.size); const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='เมืองน่าน')+1);
           await pg.goto('https://checknam.com/z/'+zi,{waitUntil:'domcontentloaded'});await new Promise(r=>setTimeout(r,30000));
           const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,5000)); await m.screenshot({path:'nan.png'});
           out.t=await pg.evaluate(()=>{const t0=performance.now();drawFlow();drawHeat();return performance.now()-t0;});
