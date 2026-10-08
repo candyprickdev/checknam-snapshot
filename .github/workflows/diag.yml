@@ -11,12 +11,11 @@ jobs:
           const p=require('puppeteer-core');(async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage(); await pg.setViewport({width:1000,height:800}); const errs=[];pg.on('pageerror',e=>errs.push(e.message));
           await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000}); await new Promise(r=>setTimeout(r,30000)); { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,8000)); }
-          out.r=await pg.evaluate(()=>{ const RST=riverStations(), on=new Set(); for(const v of RST.values()) for(const id of v) on.add(id);
-            const segs=[]; RIVER_GEO.forEach(r=>{ if(r.h) return; for(const l of r.l) for(let i=1;i<l.length;i++) segs.push([l[i-1],l[i],r.n]); });
-            const out=[]; for(const d of DATA){ if(!validPct(d)||isStale(d)||on.has(String(d.station.id))) continue; const la=+d.station.tele_station_lat, lo=+d.station.tele_station_long; let best=1e9,nn="";
-              for(const [a,b,n] of segs){ if(Math.abs(a[0]-la)>.3||Math.abs(a[1]-lo)>.3) continue; const ax=(a[1]-lo)*108, ay=(a[0]-la)*111, bx=(b[1]-lo)*108, by=(b[0]-la)*111, vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy; let u=L2?-(ax*vx+ay*vy)/L2:0; u=u<0?0:u>1?1:u; const dd=Math.hypot(ax+vx*u,ay+vy*u); if(dd<best){best=dd;nn=n;} }
-              out.push({id:d.station.id,n:d.station.tele_station_name?.th,amp:d.geocode?.amphoe_name?.th,pv:d.geocode?.province_name?.th,rv:d.river_name,la,lo,km:+best.toFixed(2),near:nn}); }
-            return out; });
+          const zi=await pg.evaluate(()=>Object.keys(PLACES).findIndex(k=>PLACES[k][0]==='วังโป่ง')+1);
+          await pg.goto('https://checknam.com/z/'+zi,{waitUntil:'domcontentloaded'}); await new Promise(r=>setTimeout(r,30000));
+          { const m=await pg.$('#map'); await m.scrollIntoView(); await new Promise(r=>setTimeout(r,6000)); await m.screenshot({path:'wp.png'}); }
+          out.r=await pg.evaluate(()=>{ const b=MAP.getBounds(); const RST=riverStations(), on=new Set(); for(const v of RST.values()) for(const id of v) on.add(id);
+            return {z:MAP.getZoom(), st:DATA.filter(d=>b.contains([+d.station.tele_station_lat,+d.station.tele_station_long])).map(d=>({id:d.station.id,n:d.station.tele_station_name?.th,rv:d.river_name,p:d.storage_percent,valid:validPct(d),stale:isStale(d),att:on.has(String(d.station.id)),la:d.station.tele_station_lat,lo:d.station.tele_station_long,lv:mapLv(d),t:d.waterlevel_datetime}))}; });
           out.errs=errs; require('fs').writeFileSync('out.json',JSON.stringify(out,null,1)); await b.close();})();
           JS
           node t.js 2> err.txt || true
