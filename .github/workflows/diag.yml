@@ -6,7 +6,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d
-          curl -s "https://checknam.com/chaophraya?x=$RANDOM" | grep -oE 'class="nm"><span class="rk"></span>[^<]*|class="pvh"[^>]*>[^<]*' | sed 's/.*>//' > out.txt || true
+          sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          for(const [n,th] of [['fd','dark'],['fl','light']]){
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_th',t)},th);
+          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
+          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,500));await pg.screenshot({path:n+'_top.png'});
+          const el=await pg.$('#cpd');if(el){await el.scrollIntoView();await new Promise(r=>setTimeout(r,3000));await el.screenshot({path:n+'_cpd.png'});}
+          out[n]={errs,cz:await pg.evaluate(()=>[...document.querySelectorAll('.cz-row')].map(x=>x.innerText).join(' | ').slice(0,300))};await cx.close();}
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
