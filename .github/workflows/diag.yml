@@ -8,7 +8,7 @@ jobs:
       - run: |
           mkdir d; cd d
           for u in https://traffic.longdo.com/en/cameralist https://traffic.longdo.com/ https://live.iticfoundation.org/ https://floodbangkok.bangkok.go.th/ https://cpudapp.bangkok.go.th/bmatraffic/ http://www.bmatraffic.com/ https://highwaytraffic.go.th/DOHWeb/ https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred https://nkndatamap.nakornnont.go.th/public https://cdp.rangsitcity.go.th/ https://map.longdo.com/docs/ ; do
-            echo "== $u" >> h.txt; curl -sIL -m 20 -A "Mozilla/5.0 checknam.com" "$u" | grep -iE "^(HTTP|x-frame-options|content-security-policy)" >> h.txt; done
+            echo "== $u" >> h.txt; curl -sIL -m 20 -A "Mozilla/5.0 checknam.com" "$u" | grep -iE "^(HTTP|x-frame-options|content-security-policy)" >> h.txt || true; done
           curl -sL -m 20 https://map.longdo.com/docs/ | grep -ioE "[^<>\"]{0,80}(cctv|camera|กล้อง)[^<>\"]{0,80}" | head -20 > longdo_docs.txt || true
           curl -sL -m 20 https://traffic.longdo.com/en/cameralist | grep -ioE "[^<>\"]{0,100}(terms|license|ลิขสิทธิ์|copyright|เงื่อนไข|api)[^<>\"]{0,100}" | head -30 > longdo_terms.txt || true
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
