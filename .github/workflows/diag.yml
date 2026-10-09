@@ -9,14 +9,15 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://checknam.com';
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [n,th] of [['cp_dark','dark'],['cp_light','light']]){
-          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
-          await pg.goto(S+'/chaophraya?x='+Date.now(),{waitUntil:'networkidle2',timeout:60000});
-          await pg.screenshot({path:n+'.png',fullPage:true});out[n]={errs,q:await pg.evaluate(()=>[...document.querySelectorAll('.cpq > div')].map(x=>x.className+' | '+x.innerText.replace(/\n/g,' / ')))};await cx.close();}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          const cl=await pg.target().createCDPSession();await cl.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:process.cwd()});
+          await pg.goto(S+'/chaophraya',{waitUntil:'networkidle2',timeout:60000});
+          const el=await pg.$('.snapb');await el.scrollIntoView();await el.screenshot({path:'snapb.png'});
+          await pg.click('#snapSave');await new Promise(r=>setTimeout(r,4000));
+          await pg.click('.seg button[data-m=lv]');await pg.evaluate(()=>{document.getElementById('snapSave').click()});await new Promise(r=>setTimeout(r,4000));
+          out.errs=errs;out.files=require('fs').readdirSync('.');require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
