@@ -17,10 +17,10 @@ jobs:
             await pg.screenshot({path:name+'.png',fullPage:true});
             out[name]={errs,info:await pg.evaluate(()=>({mode:document.documentElement.dataset.mode,lv:document.querySelector('#easy .ez-lv')?.innerText,say:document.querySelector('#easy .ez-say')?.innerText,tiles:[...document.querySelectorAll('#easy .ez-ti')].map(x=>x.innerText.replace(/\n/g,' | ')),alert:document.querySelector('#alert .lede')?.innerText?.slice(0,200),mapW:document.querySelector('#map')?.clientWidth}))};await cx.close();}
           const M={width:390,height:844,deviceScaleFactor:2};
-          const sh=async(pg,n)=>{await new Promise(r=>setTimeout(r,60000));
+          const sh=async(pg,n)=>{await new Promise(r=>setTimeout(r,15000));
             for(const [sel,f] of [['.ez-b',n+'_btn'],['#easy2 .ez-box:nth-child(2)',n+'_hist']]){const el=await pg.$(sel);if(el){await el.scrollIntoView();await new Promise(r=>setTimeout(r,800));await el.screenshot({path:f+'.png'});}}
             out[n+'_fh']=await pg.evaluate(()=>{const k=fhKey();return {fh:FH[k],now:FHN[k]}});};
-          for(const [n,name,th] of [['d','นนทบุรี/บางใหญ่','dark'],['l','นนทบุรี/บางบัวทอง','light'],['a','พระนครศรีอยุธยา/บางบาล','dark']]){
+          for(const [n,name,th] of [['d','นนทบุรี/บางใหญ่','dark'],['l','นนทบุรี/บางบัวทอง','light'],]){
             const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
             await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
             await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await pg.waitForFunction(()=>typeof ZKEYS!=='undefined');
