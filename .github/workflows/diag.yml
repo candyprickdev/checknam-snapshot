@@ -6,18 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(/Content Security|Refused/.test(m.text()))errs.push(m.text())});
-          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
-          const el=await pg.$('#ezCams');await el.scrollIntoView();await new Promise(r=>setTimeout(r,1000));await el.screenshot({path:'cams.png'});
-          await pg.click('#ezCams .ez-cb');await new Promise(r=>setTimeout(r,15000));
-          const el2=await pg.$('#ezCams');await el2.scrollIntoView();await el2.screenshot({path:'cams_open.png'});
-          const el3=await pg.$('#easy3');await el3.scrollIntoView();await el3.screenshot({path:'easy3.png'});
-          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          for(const [n,th,act] of [['cp_dark','dark',0],['cp_lv','dark',1],['cp_light','light',0]]){
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
+          await pg.goto(S+'/chaophraya',{waitUntil:'networkidle2',timeout:60000});
+          if(act){await pg.click('.seg button[data-m=lv]');await new Promise(r=>setTimeout(r,500));}
+          await pg.screenshot({path:n+'.png',fullPage:true});out[n]=errs;await cx.close();}
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.setViewport({width:1280,height:900});await pg.goto(S+'/chaophraya',{waitUntil:'networkidle2'});await pg.screenshot({path:'cp_desk.png',fullPage:true});
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
