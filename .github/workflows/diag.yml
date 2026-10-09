@@ -11,12 +11,12 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [n,th,z] of [['fa','dark',1],['fb','light',600],['fc','light',50],['fd','dark',300]]){
+          for(const [n,th,z] of [['fa','dark',1],['fb','light',600]]){
           const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
           await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
           await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,600));const bx=await pg.evaluate(()=>{const e=document.querySelector('#easy');if(!e)return null;const r=e.getBoundingClientRect();return {x:0,y:r.top+scrollY,width:390,height:Math.min(r.height,620)}});await pg.screenshot({path:n+'.png',clip:bx||{x:0,y:0,width:390,height:800},captureBeyondViewport:true});
-          out[n]={errs,fg:await pg.evaluate(()=>[...document.querySelectorAll('.ez-fg > div')].map(x=>x.innerText.replace(/\n/g,' ')))};await cx.close();}
+          const q=await pg.$('#donate');if(q){await q.scrollIntoView();await new Promise(r=>setTimeout(r,500));await q.screenshot({path:n+'qr.png'});}out[n]={errs,fg:await pg.evaluate(()=>[...document.querySelectorAll('.ez-fg > div')].map(x=>x.innerText.replace(/\n/g,' ')))};await cx.close();}
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
