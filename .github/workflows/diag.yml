@@ -17,12 +17,9 @@ jobs:
             await pg.screenshot({path:name+'.png',fullPage:true});
             out[name]={errs,info:await pg.evaluate(()=>({mode:document.documentElement.dataset.mode,lv:document.querySelector('#easy .ez-lv')?.innerText,say:document.querySelector('#easy .ez-say')?.innerText,tiles:[...document.querySelectorAll('#easy .ez-ti')].map(x=>x.innerText.replace(/\n/g,' | ')),alert:document.querySelector('#alert .lede')?.innerText?.slice(0,200),mapW:document.querySelector('#map')?.clientWidth}))};await cx.close();}
           const M={width:390,height:844,deviceScaleFactor:2};
-          await run('easy_dark',1,M);
-          await run('easy_light',1,M,()=>{localStorage.setItem('nbi_th','light')});
-          await run('easy_z2',300,M);
-          await run('easy_light_z',600,M,()=>{localStorage.setItem('nbi_th','light')});
-          await run('full_after',1,M,null,async pg=>{await pg.click('#modeBar button[data-m=full]');await new Promise(r=>setTimeout(r,3000));});
-          await run('desk_easy',1,{width:1400,height:900,deviceScaleFactor:1});
+          await run('easy_dark',1,M,null,async pg=>{await new Promise(r=>setTimeout(r,20000));});
+          await run('easy_light_z',600,M,()=>{localStorage.setItem('nbi_th','light')},async pg=>{await new Promise(r=>setTimeout(r,20000));});
+          await run('easy_bkk',50,M,null,async pg=>{await new Promise(r=>setTimeout(r,20000));});
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
