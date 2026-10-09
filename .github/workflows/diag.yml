@@ -6,10 +6,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d
-          for u in https://traffic.longdo.com/en/cameralist https://traffic.longdo.com/ https://live.iticfoundation.org/ https://floodbangkok.bangkok.go.th/ https://cpudapp.bangkok.go.th/bmatraffic/ http://www.bmatraffic.com/ https://highwaytraffic.go.th/DOHWeb/ https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred https://nkndatamap.nakornnont.go.th/public https://cdp.rangsitcity.go.th/ https://map.longdo.com/docs/ ; do
-            echo "== $u" >> h.txt; curl -sIL -m 20 -A "Mozilla/5.0 checknam.com" "$u" | grep -iE "^(HTTP|x-frame-options|content-security-policy)" >> h.txt || true; done
-          curl -sL -m 20 https://map.longdo.com/docs/ | grep -ioE "[^<>\"]{0,80}(cctv|camera|กล้อง)[^<>\"]{0,80}" | head -20 > longdo_docs.txt || true
-          curl -sL -m 20 https://traffic.longdo.com/en/cameralist | grep -ioE "[^<>\"]{0,100}(terms|license|ลิขสิทธิ์|copyright|เงื่อนไข|api)[^<>\"]{0,100}" | head -30 > longdo_terms.txt || true
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(/Content Security|Refused/.test(m.text()))errs.push(m.text())});
+          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
+          const el=await pg.$('#ezCams');await el.scrollIntoView();await new Promise(r=>setTimeout(r,1000));await el.screenshot({path:'cams.png'});
+          await pg.click('#ezCams .ez-cb');await new Promise(r=>setTimeout(r,15000));
+          const el2=await pg.$('#ezCams');await el2.scrollIntoView();await el2.screenshot({path:'cams_open.png'});
+          const el3=await pg.$('#easy3');await el3.scrollIntoView();await el3.screenshot({path:'easy3.png'});
+          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
