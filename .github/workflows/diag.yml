@@ -11,13 +11,15 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [n,th] of [['fd','dark'],['fl','light']]){
+          for(const [n,th,z] of [['ed','dark',1],['el','light',600],['eb','dark',50],['en','dark',300]]){
           const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_th',t)},th);
-          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
-          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,500));await pg.screenshot({path:n+'_top.png'});
-          const el=await pg.$('#cpd');if(el){await el.scrollIntoView();await new Promise(r=>setTimeout(r,3000));await el.screenshot({path:n+'_cpd.png'});}
-          out[n]={errs,cz:await pg.evaluate(()=>[...document.querySelectorAll('.cz-row')].map(x=>x.innerText).join(' | ').slice(0,300))};await cx.close();}
+          await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
+          await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
+          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,600));await pg.screenshot({path:n+'_top.png'});
+          if(n==='ed'){await pg.evaluate(()=>scrollTo(0,1800));await new Promise(r=>setTimeout(r,1200));await pg.screenshot({path:n+'_scroll.png'});
+            await pg.evaluate(()=>scrollTo(0,0));await pg.click('#ezPick');await new Promise(r=>setTimeout(r,800));await pg.screenshot({path:n+'_pick.png'});
+            const el=await pg.$('#easy2');await el.scrollIntoView();await new Promise(r=>setTimeout(r,800));await el.screenshot({path:n+'_why.png'});}
+          out[n]={errs};await cx.close();}
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
