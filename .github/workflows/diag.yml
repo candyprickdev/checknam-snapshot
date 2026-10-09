@@ -11,10 +11,7 @@ jobs:
           const p=require('puppeteer-core');
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();
           await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          const out=await pg.evaluate(()=>{const L=cpLine();const t0=Date.now();
-            return DATA.filter(d=>/เจ้าพระยา/.test(d.river_name||"")||/เจ้าพระยา/.test(nm(d))||(["นนทบุรี","ปทุมธานี"].includes(d.geocode?.province_name?.th)&&L&&projLine(L,d.station.tele_station_lat,d.station.tele_station_long).d<3))
-              .map(d=>({n:nm(d),code:d.station.tele_station_oldcode,pv:d.geocode?.province_name?.th,river:d.river_name,pct:d.storage_percent,bank:d.station.min_bank,wl:d.waterlevel_msl,t:d.waterlevel_datetime,stale:isStale(d,t0),sus:SUSPECT.has(d.station.id),src:d.src||"tw",agency:d.agency?.agency_shortname?.th,dist:L?+projLine(L,d.station.tele_station_lat,d.station.tele_station_long).d.toFixed(2):null}))
-              .filter(x=>["นนทบุรี","ปทุมธานี","กรุงเทพมหานคร"].includes(x.pv));});
+          const out=await pg.evaluate(async()=>{const d=DATA.find(x=>x.station.tele_station_oldcode==='CPY014');let h=null;try{h=(await getHist(d.station.id)).slice(-60)}catch(e){h=String(e)}return {reason:SUSREASON[d.station.id],prev:d.waterlevel_msl_previous,wl:d.waterlevel_msl,ground:d.station.ground_level,minbank:d.station.min_bank,hist:h}});
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
