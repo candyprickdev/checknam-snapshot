@@ -17,8 +17,16 @@ jobs:
             await pg.screenshot({path:name+'.png',fullPage:true});
             out[name]={errs,info:await pg.evaluate(()=>({mode:document.documentElement.dataset.mode,lv:document.querySelector('#easy .ez-lv')?.innerText,say:document.querySelector('#easy .ez-say')?.innerText,tiles:[...document.querySelectorAll('#easy .ez-ti')].map(x=>x.innerText.replace(/\n/g,' | ')),alert:document.querySelector('#alert .lede')?.innerText?.slice(0,200),mapW:document.querySelector('#map')?.clientWidth}))};await cx.close();}
           const M={width:390,height:844,deviceScaleFactor:2};
-          await run('easy_dark',1,M,null,async pg=>{pg.__n='d';await (async pg=>{await pg.evaluate(()=>document.querySelector('#ezShare').scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,1500));const r=await pg.evaluate(()=>{const b=document.querySelector('.ez-b').getBoundingClientRect();return [b.x,b.y,b.width,b.height]});await pg.screenshot({path:pg.__n+'_btn.png',clip:{x:0,y:r[1]-20,width:390,height:r[3]+40}});})(pg);});
-          await run('easy_light_z',1,M,()=>{localStorage.setItem('nbi_th','light')},async pg=>{pg.__n='l';await (async pg=>{await pg.evaluate(()=>document.querySelector('#ezShare').scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,1500));const r=await pg.evaluate(()=>{const b=document.querySelector('.ez-b').getBoundingClientRect();return [b.x,b.y,b.width,b.height]});await pg.screenshot({path:pg.__n+'_btn.png',clip:{x:0,y:r[1]-20,width:390,height:r[3]+40}});})(pg);});
+          const sh=async(pg,n)=>{await new Promise(r=>setTimeout(r,60000));
+            for(const [sel,f] of [['.ez-b',n+'_btn'],['#easy2 .ez-box:nth-child(2)',n+'_hist']]){const el=await pg.$(sel);if(el){await el.scrollIntoView();await new Promise(r=>setTimeout(r,800));await el.screenshot({path:f+'.png'});}}
+            out[n+'_fh']=await pg.evaluate(()=>{const k=fhKey();return {fh:FH[k],now:FHN[k]}});};
+          for(const [n,name,th] of [['d','นนทบุรี/บางใหญ่','dark'],['l','นนทบุรี/บางบัวทอง','light'],['a','พระนครศรีอยุธยา/บางบาล','dark']]){
+            const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+            await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
+            await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await pg.waitForFunction(()=>typeof ZKEYS!=='undefined');
+            const z=await pg.evaluate(n=>ZKEYS.indexOf(n)+1,name);await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});
+            await new Promise(r=>setTimeout(r,20000));await pg.evaluate(()=>document.querySelector('#easy2').scrollIntoView());
+            await sh(pg,n);await cx.close();}
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
