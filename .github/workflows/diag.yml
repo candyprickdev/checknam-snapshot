@@ -10,8 +10,8 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();
-          await pg.goto('https://checknam.com/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          const out=await pg.evaluate(async()=>{const d=DATA.find(x=>x.station.tele_station_oldcode==='CPY014');let h=null;try{h=(await getHist(d.station.id)).slice(-60)}catch(e){h=String(e)}return {reason:SUSREASON[d.station.id],prev:d.waterlevel_msl_previous,wl:d.waterlevel_msl,ground:d.station.ground_level,minbank:d.station.min_bank,hist:h}});
+          await pg.goto('https://stage.checknam.pages.dev/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
+          const out=await pg.evaluate(async()=>{const d=DATA.find(x=>x.station.tele_station_oldcode==='CPY014');try{await getHist(d.station.id)}catch(e){}const c=chaoPhrayaNow();return {sus:SUSPECT.has(d.station.id),reason:SUSREASON[d.station.id]||null,nsus:SUSPECT.size,cp:c&&c.st.map(r=>r[0]+' '+r[1]+' '+r[2])}});
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
