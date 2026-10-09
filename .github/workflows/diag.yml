@@ -9,11 +9,13 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          const p=require('puppeteer-core');const S='https://checknam.com';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          {const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          out.cp=await pg.evaluate(()=>{const c=chaoPhrayaNow();return c&&c.q});
-          out.q=await pg.evaluate(()=>['C.2','C.13','C.29A'].map(c=>{const d=DATA.find(x=>x.station.tele_station_oldcode===c);return d&&{c,q:d.discharge,qmax:d.station.qmax,t:d.discharge_datetime||d.waterlevel_datetime}}));await cx.close();}
+          for(const [n,th] of [['cp_dark','dark'],['cp_light','light']]){
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
+          await pg.goto(S+'/chaophraya?x='+Date.now(),{waitUntil:'networkidle2',timeout:60000});
+          await pg.screenshot({path:n+'.png',fullPage:true});out[n]={errs,q:await pg.evaluate(()=>[...document.querySelectorAll('.cpq > div')].map(x=>x.className+' | '+x.innerText.replace(/\n/g,' / ')))};await cx.close();}
           require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
