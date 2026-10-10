@@ -9,15 +9,50 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [n,th,z] of [['fa','light',1],['fc','dark',50]]){
-          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';const INJ=`(V)=>{
+          const nm=document.querySelector('#ezPick span')?.textContent||'บางใหญ่';
+          const k=place===PIN_KEY?PIN_NEAR:place, pv=PLACES[k][3];
+          const srch='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>';
+          const loc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+          const chev='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+          const nav='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5 3.8 10.6c-.9.4-.8 1.6.1 1.9l6.6 1.9 1.9 6.6c.3.9 1.5 1 1.9.1z"/></svg>';
+          const A='var(--river-ink)';
+          const css=\`#mk{font-family:var(--f-body);color:var(--ink)}
+          #mk .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+          #mk .cap1{display:inline-flex;align-items:center;gap:10px;padding:6px 8px 6px 18px;border-radius:999px;background:color-mix(in srgb,\${A} 10%,var(--panel));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,\${A} 30%,transparent),0 4px 14px rgba(0,0,0,.08);min-width:0}
+          #mk .cap1 b{font:700 clamp(1.9rem,8.6vw,2.3rem)/1.15 var(--f-body);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          #mk .cv1{width:34px;height:34px;border-radius:50%;background:\${A};color:var(--bg);display:grid;place-items:center;flex:none}#mk .cv1 svg{width:19px;height:19px}
+          #mk .circ{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;color:\${A};background:var(--panel);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,\${A} 30%,transparent),0 4px 14px rgba(0,0,0,.08);flex:none}#mk .circ svg{width:22px;height:22px}
+          #mk .hint{font-size:.8rem;color:var(--muted);margin:8px 0 0 18px}
+          #mk .capl{display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
+          #mk .capl .k{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}#mk .capl .k svg{width:14px;height:14px;color:\${A}}
+          #mk .pill{display:inline-flex;align-items:center;gap:5px;color:\${A};font-weight:700;background:color-mix(in srgb,\${A} 12%,transparent);padding:6px 11px 6px 12px;border-radius:99px;font-size:.9rem}#mk .pill svg{width:16px;height:16px}
+          #mk .nm2{font:700 2.6rem/1.1 var(--f-body);letter-spacing:-.015em;margin-top:4px}
+          #mk .prov{font-size:.95rem;color:var(--muted)}
+          #mk .seg{display:flex;border-radius:16px;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line),0 4px 14px rgba(0,0,0,.08);overflow:hidden;flex:none}
+          #mk .seg div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:62px;height:62px;font-size:.72rem;font-weight:700;color:\${A}}
+          #mk .seg div+div{box-shadow:inset 1px 0 0 var(--line)}#mk .seg div.p{background:\${A};color:var(--bg)}#mk .seg svg{width:22px;height:22px}
+          #mk .nm{font:700 clamp(1.9rem,8.6vw,2.3rem)/1.1 var(--f-body);letter-spacing:-.01em}
+          #mk .nm4 i{display:block;height:4px;border-radius:2px;background:linear-gradient(90deg,\${A},transparent);margin-top:6px;width:100%}
+          #mk .acts{display:flex;gap:18px;margin-top:12px}
+          #mk .act{display:flex;align-items:center;gap:8px;font-size:.92rem;font-weight:700;color:\${A}}
+          #mk .act span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,\${A} 14%,var(--panel))}
+          #mk .act.p span{background:\${A};color:var(--bg)}#mk .act svg{width:18px;height:18px}\`;
+          const H={
+          1:\`<div class="row"><div class="cap1"><b>\${nm}</b><span class="cv1">\${chev}</span></div><div class="circ">\${loc}</div></div><div class="hint">แตะชื่อเพื่อเปลี่ยนพื้นที่ · ปุ่มขวาใช้ตำแหน่งฉัน</div>\`,
+          2:\`<div class="capl"><span class="k">\${nav}พื้นที่ที่ดูอยู่</span><span class="pill">เปลี่ยนพื้นที่\${chev}</span></div><div class="row"><div><div class="nm2">\${nm}</div><div class="prov">\${pv}</div></div><div class="circ">\${loc}</div></div>\`,
+          3:\`<div class="row"><div><div class="nm">\${nm}</div><div class="prov">\${pv}</div></div><div class="seg"><div class="p">\${srch}เปลี่ยน</div><div>\${loc}ตำแหน่ง</div></div></div>\`,
+          4:\`<div class="nm nm4" style="display:inline-block">\${nm}<i></i></div><div class="acts"><div class="act p"><span>\${srch}</span>เปลี่ยนพื้นที่</div><div class="act"><span>\${loc}</span>ตำแหน่งฉัน</div></div>\`};
+          let st=document.getElementById('mkcss'); if(!st){st=document.createElement('style');st.id='mkcss';document.head.appendChild(st);} st.textContent=css;
+          document.getElementById('ezPlace').innerHTML=V?\`<div id="mk">\${H[V]}</div>\`:document.getElementById('ezPlace').innerHTML;
+          }
+          `;
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+          for(const th of ['light','dark']){const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
-          await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
-          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,600));const bx=await pg.evaluate(()=>{const e=document.querySelector('#easy');if(!e)return null;const r=e.getBoundingClientRect();return {x:0,y:r.top+scrollY,width:390,height:Math.min(r.height,620)}});await pg.screenshot({path:n+'.png',clip:bx||{x:0,y:0,width:390,height:800},captureBeyondViewport:true});
-          const q=await pg.$('#s-radar');if(q){await q.scrollIntoView();await new Promise(r=>setTimeout(r,9000));await q.screenshot({path:n+'rd.png'});}out[n]={errs,fg:await pg.evaluate(()=>[...document.querySelectorAll('.ez-fg > div')].map(x=>x.innerText.replace(/\n/g,' '))),tx:await pg.evaluate(()=>{const g=s=>{const e=document.querySelector(s);return e?e.textContent.replace(/\s+/g,' ').trim().slice(0,900):null};return {now:g('#fcNow'),sum:g('#alert'),rain:g('#rainBox'),radar:g('#rdrS'),obs:typeof RV!=='undefined'?RV.obs:null}})};await cx.close();}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));
+          for(const v of [0,1,2,3,4]){await pg.evaluate('('+INJ+')('+v+')');await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,500));await pg.screenshot({path:th+v+'.png',clip:{x:0,y:0,width:390,height:430}});}
+          await cx.close();}await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
