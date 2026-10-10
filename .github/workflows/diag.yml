@@ -8,26 +8,16 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          npm i -s pngjs >/dev/null 2>&1
           cat > t.js <<'JS'
-          const {PNG}=require('pngjs');const fs=require('fs');
-          const h="88ddee6cd1eb51c5e836bae51baee200a3e0009ad50091ca0088bf007fb40077aa0070a300699c006295005b8e005588005180004e78004a70004768ffee00ffe000ffd200ffc500ffb700ffaa00ff9f00ff9500ff8b00ff8100ff4400f23600e62800d91b00cd0d00c10000a800008f0000760000005d0000ffaaffff9fffff95ffff8bffff81ffff77ffff6cffff62ffff58ffff4eff";
-          const P=[];for(let i=0;i<50;i++){const s=h.substr(i*6,6);P.push([parseInt(s.substr(0,2),16),parseInt(s.substr(2,2),16),parseInt(s.substr(4,2),16),15+i]);}
-          const dbz=(r,g,b)=>{let best=1e9,d=0;for(const p of P){const e=(p[0]-r)**2+(p[1]-g)**2+(p[2]-b)**2;if(e<best){best=e;d=p[3];}}return [best<5000?d:0,best];};
-          (async()=>{const out={now:Date.now()};
-          const m=await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-          out.host=m.host;out.frames=(m.radar.past||[]).map(f=>[f.time,f.path]);out.nowcast=(m.radar.nowcast||[]).length;out.lagMin=Math.round((Date.now()/1000-m.radar.past.at(-1).time)/60);
-          const f=m.radar.past.at(-1);const n=128;const tx=x=>Math.floor((x+180)/360*n),ty=y=>{const s=Math.sin(y*Math.PI/180);return Math.floor((0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n)};
-          // Thailand bbox
-          const T=[];for(let X=tx(97);X<=tx(106);X++)for(let Y=ty(20.5);Y<=ty(5.5);Y++)T.push([X,Y]);
-          const ST={};for(const o of ['2/1_0','2/0_0'])ST[o]={tiles:0,px:0,alphaLow:0,matched:0,unmatched:0,dbzHist:{},badColors:{},lowC:{}};const st0={tiles:0,px:0,alphaLow:0,matched:0,unmatched:0,dbzHist:{},badColors:{}};
-          for(const [X,Y] of T){for(const opt of ['2/1_0','2/0_0']){const u=`${m.host}${f.path}/256/7/${X}/${Y}/${opt}.png`;const r=await fetch(u);if(!r.ok){st['http'+r.status]=(st['http'+r.status]||0)+1;continue;}
-          const st=ST[opt];const png=PNG.sync.read(Buffer.from(await r.arrayBuffer()));st.tiles++;const d=png.data;
-          for(let q=0;q<d.length;q+=4){if(d[q+3]===0)continue;st.px++;const al=d[q+3];st.ah=st.ah||{};const ak=Math.floor(al/32)*32;if(al<200){st.alphaLow++;const [z2]=dbz(d[q],d[q+1],d[q+2]);const kk=ak+'@'+(Math.floor(z2/5)*5);st.ah[kk]=(st.ah[kk]||0)+1;const lc=d[q].toString(16).padStart(2,'0')+d[q+1].toString(16).padStart(2,'0')+d[q+2].toString(16).padStart(2,'0')+'/'+al;st.lowC[lc]=(st.lowC[lc]||0)+1;continue;}const [z,b]=dbz(d[q],d[q+1],d[q+2]);if(z){st.matched++;const k=Math.floor(z/5)*5;st.dbzHist[k]=(st.dbzHist[k]||0)+1;}else{st.unmatched++;const c=d[q].toString(16).padStart(2,'0')+d[q+1].toString(16).padStart(2,'0')+d[q+2].toString(16).padStart(2,'0');st.badColors[c]=(st.badColors[c]||0)+1;}}}}
-          for(const o in ST){ST[o].badColors=Object.entries(ST[o].badColors).sort((a,b)=>b[1]-a[1]).slice(0,8);ST[o].lowC=Object.entries(ST[o].lowC).sort((a,b)=>b[1]-a[1]).slice(0,25);}out.thailand=ST;
-          // coverage check: what does the "coverage" layer say for Bangkok tile
-          try{const cv=m.radar&&m.host;const u=`${m.host}/v2/coverage/0/256/7/${tx(100.5)}/${ty(13.8)}/0/0_0.png`;const r=await fetch(u);out.coverage=r.status;if(r.ok){const p=PNG.sync.read(Buffer.from(await r.arrayBuffer()));let a=0;for(let q=3;q<p.data.length;q+=4)if(p.data[q])a++;out.coverageOpaque=a;}}catch(e){out.covErr=String(e)}
-          fs.writeFileSync('rv.json',JSON.stringify(out,null,1));})();
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          for(const [n,th,z] of [['fa','dark',1],['fb','light',600],['fc','light',50],['fd','dark',200]]){
+          const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_th',t)},th);
+          await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
+          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,600));const bx=await pg.evaluate(()=>{const e=document.querySelector('#easy');if(!e)return null;const r=e.getBoundingClientRect();return {x:0,y:r.top+scrollY,width:390,height:Math.min(r.height,620)}});await pg.screenshot({path:n+'.png',clip:bx||{x:0,y:0,width:390,height:800},captureBeyondViewport:true});
+          const q=await pg.$('#donate');if(q){await q.scrollIntoView();await new Promise(r=>setTimeout(r,500));await q.screenshot({path:n+'qr.png'});}out[n]={errs,fg:await pg.evaluate(()=>[...document.querySelectorAll('.ez-fg > div')].map(x=>x.innerText.replace(/\n/g,' '))),tx:await pg.evaluate(()=>{const g=s=>{const e=document.querySelector(s);return e?e.textContent.replace(/\s+/g,' ').trim().slice(0,900):null};return {now:g('#fcNow'),sum:g('#alert'),rain:g('#rainBox'),radar:g('#rdrS'),obs:typeof RV!=='undefined'?RV.obs:null}})};await cx.close();}
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
