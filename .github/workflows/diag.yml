@@ -11,13 +11,15 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [z,th] of [[1,'dark'],[600,'light']]){const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument((t)=>{localStorage.setItem('nbi_th',t);localStorage.setItem('nbi_mode','easy')},th);
-          await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,26000));
-          await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();});
-          const el=await pg.$('#easy .ez-box:has(.ra)');if(el){await el.screenshot({path:'nx'+z+'.png'});await pg.evaluate(()=>document.querySelector('#easy .ra-d').open=true);await new Promise(r=>setTimeout(r,300));await el.screenshot({path:'nxo'+z+'.png'});}
-          out[z]={errs};await cx.close();}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          const cx=await b.createBrowserContext();await cx.overridePermissions(S,['geolocation']);const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});await pg.setGeolocation({latitude:13.7267,longitude:100.5106,accuracy:20});
+          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_pin',JSON.stringify({la:13.8443,lo:100.4131}));localStorage.setItem('nbi_zone','__pin__');});
+          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
+          const snap=async()=>pg.evaluate(()=>{const g=s=>{const e=document.querySelector(s);return e?e.textContent.replace(/\s+/g,' ').trim().slice(0,220):null};return {place, pk:PK(), name:g('#ezPlace'), h1:g('#zH1')||document.title, sub:g('.ez-x .rd')+' | '+g('#easy .ez-x svg text'), radar:g('#rdrS'), rain:g('#rainT'), obs:RV.obs&&RV.obs.place, say:g('.ez-say2')}});
+          out.before=await snap();
+          await pg.click('#ezPin');await new Promise(r=>setTimeout(r,22000));
+          out.after=await snap();await pg.screenshot({path:'loc.png',clip:{x:0,y:0,width:390,height:760}});
+          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
