@@ -9,17 +9,22 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://checknam.com';
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const cx=await b.createBrowserContext();await cx.overridePermissions(S,['geolocation']);const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.setViewport({width:390,height:844,deviceScaleFactor:2});await pg.setGeolocation({latitude:13.7267,longitude:100.5106,accuracy:20});
-          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_pin',JSON.stringify({la:13.8443,lo:100.4131}));localStorage.setItem('nbi_zone','__pin__');});
+          // 1) Khlong San (wall case)
+          {const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_mode','easy')});
+          const z=await pg.evaluate(()=>0);await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,3000));
+          const id=await pg.evaluate(()=>ZKEYS.indexOf('กรุงเทพมหานคร/คลองสาน')+1);await pg.goto(S+'/z/'+id,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,24000));
+          await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();scrollTo(0,0)});await pg.screenshot({path:'ks.png',clip:{x:0,y:0,width:390,height:1250}});
+          out.ks={errs,rd:await pg.evaluate(()=>document.querySelector('#easy .ez-x .rd').innerText),say:await pg.evaluate(()=>document.querySelector('.ez-say2').innerText)};await cx.close();}
+          // 2) pin moved: Bang Yai pin -> ICONSIAM via pinUse, check radar
+          {const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:1});
+          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_pin',JSON.stringify({la:13.8443,lo:100.4131}));localStorage.setItem('nbi_zone','__pin__');});
           await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
-          const snap=async()=>pg.evaluate(()=>{const g=s=>{const e=document.querySelector(s);return e?e.textContent.replace(/\s+/g,' ').trim().slice(0,220):null};return {place, pk:PK(), name:g('#ezPlace'), h1:g('#zH1')||document.title, sub:g('.ez-x .rd')+' | '+g('#easy .ez-x svg text'), radar:g('#rdrS'), rain:g('#rainT'), obs:RV.obs&&RV.obs.place, say:g('.ez-say2')}});
-          out.before=await snap();
-          await pg.evaluate(()=>pinUse(13.7267,100.5106));await new Promise(r=>setTimeout(r,25000));
-          out.after=await snap();await pg.screenshot({path:'loc.png',clip:{x:0,y:0,width:390,height:760}});
-          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          const g=()=>pg.evaluate(()=>({pk:PK(),radar:(document.querySelector('#rdrS')||{}).textContent,obs:RV.obs&&RV.obs.place,rvkey:RV_KEY,name:document.querySelector('#ezPlace').innerText}));
+          out.pin1=await g();await pg.evaluate(()=>pinUse(13.7267,100.5106));await new Promise(r=>setTimeout(r,24000));out.pin2=await g();out.pinErr=errs;await cx.close();}
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
