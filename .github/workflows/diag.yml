@@ -9,26 +9,16 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://checknam.com';
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
-          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          out.r=await pg.evaluate(async()=>{
-           const R={};const d0=DATA[0];R.keys=Object.keys(d0);R.skeys=Object.keys(d0.station);R.sample=JSON.stringify(d0).slice(0,1500);
-           const f=d=>({n:String(nm(d)).trim(),id:d.station.id,oc:d.station.tele_station_oldcode,ag:(d.agency&&(d.agency.agency_shortname?.th||d.agency.agency_name?.th))||d.station.agency_id||'',pv:d.geocode?.province_name?.th,am:d.geocode?.amphoe_name?.th,rv:d.river_name,la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,wl:+d.waterlevel_msl,pct:+d.storage_percent,mb:d.station.min_bank,lb:d.station.left_bank,rb:d.station.right_bank,gl:d.station.ground_level,t:d.waterlevel_datetime,stale:isStale(d),sus:SUSPECT.has(d.station.id)});
-           R.cp=DATA.filter(d=>/เจ้าพระยา/.test(d.river_name||'')).map(f);
-           R.metro=DATA.filter(d=>['กรุงเทพมหานคร','นนทบุรี','ปทุมธานี','สมุทรปราการ'].includes(d.geocode?.province_name?.th)).map(f);
-           R.over=DATA.filter(d=>+d.storage_percent>=100).map(f);R.n=DATA.length;
-           // zone rule comparison
-           const okAll=okStations(),t0=Date.now();
-           const pick=(la,lo,r1,minN)=>{const k=d=>{const dx=(d.station.tele_station_long-lo)*108,dy=(d.station.tele_station_lat-la)*111;return Math.sqrt(dx*dx+dy*dy)};
-            const inR=okAll.filter(d=>!isStale(d,t0)&&k(d)<=30).sort((a,b)=>k(a)-k(b));let near=inR.filter(d=>k(d)<=r1);if(near.length<minN)near=inR.filter(d=>k(d)<=12);if(!near.length)near=inR.slice(0,3);if(!near.length)return null;
-            const mx=near.reduce((m,d)=>+d.storage_percent>+m.storage_percent?d:m,near[0]);return [String(nm(mx)).trim(),+k(mx).toFixed(1),Math.round(+mx.storage_percent),lvOfPct(+mx.storage_percent),near.length]};
-           R.z=ZKEYS.map(key=>{const P=PLACES[key];return [key,pick(P[1],P[2],12,1),pick(P[1],P[2],5,1),pick(P[1],P[2],5,2),pick(P[1],P[2],6,2)]});
-           R.ic=[pick(13.7267,100.5106,12,1),pick(13.7267,100.5106,5,1),pick(13.7267,100.5106,5,2)];
-           try{R.bma=await (await fetch('/api/bma')).json();}catch(e){R.bmaErr=String(e)}
-           return R;});
-          out.errs=errs;require('fs').writeFileSync('out.json',JSON.stringify(out));await b.close();})();
+          const shot=async(name,setup,after)=>{const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+           await pg.evaluateOnNewDocument(setup);await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,24000));
+           const r=await pg.evaluate(after);await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();scrollTo(0,0)});await pg.screenshot({path:name+'.png',clip:{x:0,y:0,width:390,height:1300}});out[name]={errs,r};await cx.close();};
+          const info=()=>{const rc=riskCore();const f=rc.f.find(x=>x.t==='ระดับน้ำใกล้เขต');return {zone:place,mx:rc.mx&&nm(rc.mx),how:rc.nearHow,n:rc.near.length,L:rc.L&&rc.L.name,lvl:f&&f.v,d:f&&f.d,floT:rc.floT,rd:(document.querySelector('#easy .ez-x .rd')||{}).innerText,say:(document.querySelector('.ez-say2')||{}).innerText,al:(document.querySelector('#alert')||{}).innerText,surr:(rc.f.find(x=>x.t==='จุดล้นตลิ่งรอบเขต')||{}).d}};
+          await shot('ic',()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_pin',JSON.stringify({la:13.7267,lo:100.5106}));localStorage.setItem('nbi_zone','__pin__');},info);
+          for(const [n,z] of [['ks','กรุงเทพมหานคร/คลองสาน'],['by','นนทบุรี/บางใหญ่'],['bp','กรุงเทพมหานคร/บางพลัด'],['tc','กรุงเทพมหานคร/ตลิ่งชัน'],['sn','พระนครศรีอยุธยา/เสนา']]) await shot(n,new Function(`localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_zone',${JSON.stringify(z)});`),info);
+          {const pg=await b.newPage();await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));out.zl=await pg.evaluate(()=>{const z=zoneLevels();return ZKEYS.map((k,i)=>[k,z.z[i]])});}
+          require('fs').writeFileSync('out.json',JSON.stringify(out));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
