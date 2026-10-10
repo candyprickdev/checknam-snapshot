@@ -9,14 +9,15 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const [z,mode,th] of [[4,'easy','light'],[1,'easy','dark'],[600,'full','light'],[200,'easy','light']]){const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument((m,t)=>{localStorage.setItem('nbi_th',t);localStorage.setItem('nbi_mode',m)},mode,th);
-          await pg.goto(S+'/z/'+z,{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,26000));
-          const ex=await pg.$('#easy');if(ex&&mode==='easy'){await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,300));await pg.screenshot({path:'top'+z+'.png',clip:{x:0,y:0,width:390,height:700}});}const fgx=await pg.$('#easy .ez-fg');if(fgx&&mode==='easy'){await fgx.evaluate(e=>e.previousElementSibling.scrollIntoView());await new Promise(r=>setTimeout(r,300));const bb=await pg.evaluate(()=>{const h=document.querySelector('#easy .ez-fh2').getBoundingClientRect(),g=document.querySelector('#easy .ez-fg').getBoundingClientRect();return {x:0,y:h.top+scrollY,width:390,height:g.bottom-h.top}});await pg.screenshot({path:'fg'+z+'.png',clip:bb,captureBeyondViewport:true});}const sel=mode==='easy'?'#easy .ez-box:has(.ra)':'#rainBox .ra-w';const el=await pg.$(sel);if(el){await el.scrollIntoView();await new Promise(r=>setTimeout(r,500));await el.screenshot({path:'ra'+z+'.png'});}
-          out[z]={wx:await pg.evaluate(()=>{const e=document.querySelector('.ez-wxn');return e?e.textContent:null}),errs,txt:await pg.evaluate(s=>{const e=document.querySelector(s);return e?e.innerText:null},sel)};await cx.close();}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          const p=require('puppeteer-core');const S='https://checknam.com';
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+          const pg=await b.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:1.5});
+          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_mode','easy')});
+          await pg.goto(S+'/z/1',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,26000));
+          await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();});
+          const H=await pg.evaluate(()=>document.documentElement.scrollHeight);
+          for(let i=0;i*1600<H;i++){await pg.screenshot({path:'full'+i+'.png',clip:{x:0,y:i*1600,width:390,height:Math.min(1600,H-i*1600)},captureBeyondViewport:true});}
+          require('fs').writeFileSync('out.json',JSON.stringify({H}));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
