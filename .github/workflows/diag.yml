@@ -9,15 +9,9 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const pg=await b.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_mode','full')});
-          await pg.goto(S+'/z/4',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,26000));
-          out.now=new Date().toISOString();
-          out.tx=await pg.evaluate(()=>{const g=s=>{const e=document.querySelector(s);return e?e.textContent.replace(/\s+/g,' ').trim().slice(0,1200):null};return {radar:g('#rdrS'),rain:g('#rainBox'),now:g('#fcNow'),obs:RV.obs,frames:RV.frames.map(f=>f.time)}});
-          const q=await pg.$('#s-radar');if(q){await q.scrollIntoView();await new Promise(r=>setTimeout(r,8000));await q.screenshot({path:'pk.png'});}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
+          (async()=>{const U=['https://data.tmd.go.th/api/WeatherWarningNews/v1/?uid=api&ukey=api12345&format=json','https://data.tmd.go.th/api/WeatherWarningNews/v1/?uid=api&ukey=api12345','https://www.tmd.go.th/api/xml/warning-news','https://api.open-meteo.com/v1/forecast?latitude=13.91&longitude=100.5&hourly=precipitation&models=ecmwf_ifs025,gfs_seamless,icon_seamless,best_match&forecast_days=4&timezone=Asia%2FBangkok'];
+          const out={};for(const u of U){try{const r=await fetch(u,{headers:{'user-agent':'Mozilla/5.0 checknam.com'},signal:AbortSignal.timeout(20000)});const t=await r.text();out[u]={s:r.status,ct:r.headers.get('content-type'),b:t.slice(0,1500)};}catch(e){out[u]={e:String(e)}}}
+          require('fs').writeFileSync('tmd.json',JSON.stringify(out,null,1));})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
