@@ -20,11 +20,11 @@ jobs:
           const f=m.radar.past.at(-1);const n=128;const tx=x=>Math.floor((x+180)/360*n),ty=y=>{const s=Math.sin(y*Math.PI/180);return Math.floor((0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n)};
           // Thailand bbox
           const T=[];for(let X=tx(97);X<=tx(106);X++)for(let Y=ty(20.5);Y<=ty(5.5);Y++)T.push([X,Y]);
-          const st={tiles:0,px:0,alphaLow:0,matched:0,unmatched:0,dbzHist:{},badColors:{}};
-          for(const [X,Y] of T){for(const opt of ['2/1_0']){const u=`${m.host}${f.path}/256/7/${X}/${Y}/${opt}.png`;const r=await fetch(u);if(!r.ok){st['http'+r.status]=(st['http'+r.status]||0)+1;continue;}
-          const png=PNG.sync.read(Buffer.from(await r.arrayBuffer()));st.tiles++;const d=png.data;
-          for(let q=0;q<d.length;q+=4){if(d[q+3]===0)continue;st.px++;const al=d[q+3];st.ah=st.ah||{};const ak=Math.floor(al/32)*32;if(al<200){st.alphaLow++;const [z2]=dbz(d[q],d[q+1],d[q+2]);const kk=ak+'@'+(Math.floor(z2/5)*5);st.ah[kk]=(st.ah[kk]||0)+1;continue;}const [z,b]=dbz(d[q],d[q+1],d[q+2]);if(z){st.matched++;const k=Math.floor(z/5)*5;st.dbzHist[k]=(st.dbzHist[k]||0)+1;}else{st.unmatched++;const c=d[q].toString(16).padStart(2,'0')+d[q+1].toString(16).padStart(2,'0')+d[q+2].toString(16).padStart(2,'0');st.badColors[c]=(st.badColors[c]||0)+1;}}}}
-          st.badColors=Object.entries(st.badColors).sort((a,b)=>b[1]-a[1]).slice(0,15);out.thailand=st;
+          const ST={};for(const o of ['2/1_0','2/0_0'])ST[o]={tiles:0,px:0,alphaLow:0,matched:0,unmatched:0,dbzHist:{},badColors:{},lowC:{}};const st0={tiles:0,px:0,alphaLow:0,matched:0,unmatched:0,dbzHist:{},badColors:{}};
+          for(const [X,Y] of T){for(const opt of ['2/1_0','2/0_0']){const u=`${m.host}${f.path}/256/7/${X}/${Y}/${opt}.png`;const r=await fetch(u);if(!r.ok){st['http'+r.status]=(st['http'+r.status]||0)+1;continue;}
+          const st=ST[opt];const png=PNG.sync.read(Buffer.from(await r.arrayBuffer()));st.tiles++;const d=png.data;
+          for(let q=0;q<d.length;q+=4){if(d[q+3]===0)continue;st.px++;const al=d[q+3];st.ah=st.ah||{};const ak=Math.floor(al/32)*32;if(al<200){st.alphaLow++;const [z2]=dbz(d[q],d[q+1],d[q+2]);const kk=ak+'@'+(Math.floor(z2/5)*5);st.ah[kk]=(st.ah[kk]||0)+1;const lc=d[q].toString(16).padStart(2,'0')+d[q+1].toString(16).padStart(2,'0')+d[q+2].toString(16).padStart(2,'0')+'/'+al;st.lowC[lc]=(st.lowC[lc]||0)+1;continue;}const [z,b]=dbz(d[q],d[q+1],d[q+2]);if(z){st.matched++;const k=Math.floor(z/5)*5;st.dbzHist[k]=(st.dbzHist[k]||0)+1;}else{st.unmatched++;const c=d[q].toString(16).padStart(2,'0')+d[q+1].toString(16).padStart(2,'0')+d[q+2].toString(16).padStart(2,'0');st.badColors[c]=(st.badColors[c]||0)+1;}}}}
+          for(const o in ST){ST[o].badColors=Object.entries(ST[o].badColors).sort((a,b)=>b[1]-a[1]).slice(0,8);ST[o].lowC=Object.entries(ST[o].lowC).sort((a,b)=>b[1]-a[1]).slice(0,25);}out.thailand=ST;
           // coverage check: what does the "coverage" layer say for Bangkok tile
           try{const cv=m.radar&&m.host;const u=`${m.host}/v2/coverage/0/256/7/${tx(100.5)}/${ty(13.8)}/0/0_0.png`;const r=await fetch(u);out.coverage=r.status;if(r.ok){const p=PNG.sync.read(Buffer.from(await r.arrayBuffer()));let a=0;for(let q=3;q<p.data.length;q+=4)if(p.data[q])a++;out.coverageOpaque=a;}}catch(e){out.covErr=String(e)}
           fs.writeFileSync('rv.json',JSON.stringify(out,null,1));})();
