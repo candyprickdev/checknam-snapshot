@@ -8,19 +8,11 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const [z,th] of [['ปราจีนบุรี/บ้านสร้าง','dark'],['นนทบุรี/บางใหญ่','light'],['เชียงใหม่/เมืองเชียงใหม่','dark']]){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument((z,th)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);},z,th);
-          pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(75000);
-          const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('.ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
-          const el=h.asElement(); if(el){await el.evaluate(e=>{const d=e.querySelector('details');if(d)d.open=true;});await el.screenshot({path:z.split('/')[1]+'.png'});fs.appendFileSync('txt.txt',z+'\n'+await el.evaluate(e=>e.innerText)+'\n\n');} await pg.close();}
-          await b.close();})();
-          JS
-          node t.js 2>> err.txt || true
+          UA='Mozilla/5.0 (compatible; checknam.com; +https://checknam.com)'
+          q=$(python3 -c "import urllib.parse;print(urllib.parse.quote('(น้ำท่วม OR น้ำป่า OR ระดับน้ำ OR อุทกภัย) บ้านสร้าง ปราจีนบุรี when:7d'))")
+          curl -s -m 30 -A "$UA" -o gn.xml -w "gn %{http_code} %{size_download}\n" "https://news.google.com/rss/search?q=$q&hl=th&gl=TH&ceid=TH:th" >> w.txt || echo "gn fail" >> w.txt
+          for u in https://www.thaipbs.or.th/rss/news https://www.matichon.co.th/feed https://www.khaosod.co.th/feed https://www.thairath.co.th/rss/news https://www.prachachat.net/feed https://www.bangkokbiznews.com/rss/feed/news.xml https://www.prd.go.th/th/rss https://www.dailynews.co.th/feed/ https://www.naewna.com/rss.xml https://www.nationtv.tv/rss https://www.thaipost.net/feed/ https://www.komchadluek.net/rss https://www.sanook.com/news/rss/ https://www.pptvhd36.com/rss https://www.amarintv.com/rss https://www.tnnthailand.com/rss ; do n=$(echo $u | sed 's#https://##;s#[/.]#_#g'); curl -sL -m 25 -A "$UA" -o "f_$n.xml" -w "$u %{http_code} %{size_download} %{content_type}\n" "$u" >> w.txt || echo "$u fail" >> w.txt; done
+          for f in f_*.xml; do echo "== $f $(grep -o '<item' $f | wc -l) items; $(grep -o '<pubDate>[^<]*' $f | head -1)"; done >> w.txt
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
