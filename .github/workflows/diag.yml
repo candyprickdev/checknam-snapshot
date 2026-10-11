@@ -22,8 +22,7 @@ jobs:
           const info=await pg.evaluate(chk);fs.appendFileSync('info.txt',name+' '+w+': '+JSON.stringify(info)+' errs='+JSON.stringify(errs)+'\n');
           if(full)await pg.screenshot({path:`${name}-${w}.png`,fullPage:true});else await pg.screenshot({path:`${name}-${w}.png`});await pg.close();};
           const L={nbi_th:'light',nbi_zone:'กรุงเทพมหานคร/ป้อมปราบศัตรูพ่าย',nbi_zp_seen:'1'};
-          for(const [w,h] of [[1024,768],[1366,1024]]) await go('e',S+'/',w,h,{...L,nbi_mode:'easy'},false);
-          await go('d',S+'/',1440,900,{...L,nbi_mode:'easy',nbi_th:'dark',nbi_zone:'นนทบุรี/บางใหญ่'},false);
+          for(const [w,h] of [[1000,700],[1024,768],[1180,820],[1920,1080]]) await go('e',S+'/',w,h,{...L,nbi_mode:'easy'},false);
           await b.close();})();
           JS
           node t.js 2> err.txt || true
