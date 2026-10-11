@@ -15,7 +15,7 @@ jobs:
           for(const [z,th,hh] of [['ปราจีนบุรี/บ้านสร้าง','dark',10],['นนทบุรี/บางใหญ่','light',17.8],['กรุงเทพมหานคร/พระนคร','light',6.3],['เชียงใหม่/เมืองเชียงใหม่','dark',13]]){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument((z,th,hh)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);const n0=Date.now(),d=new Date(n0+7*36e5),tgt=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-7*36e5+hh*36e5,off=tgt-n0;window.__pxOff=off;},z,th,hh);
           pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
-          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(40000);await pg.evaluate(()=>{const o=window.__pxOff,dn=Date.now.bind(Date);Date.now=()=>dn()+o;if(EZPX){EZPX.stop();EZPX=null}pxInit();});await W(2500);
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(45000);
           const el=await pg.$('#easy .ez-x'); if(el){await el.screenshot({path:z.split('/')[1]+'.png'});}
           fs.appendFileSync('txt.txt',z+' '+JSON.stringify(await pg.evaluate(()=>{const c=document.querySelector('#easy canvas.px');return c&&{...c.dataset,wx:!!document.querySelector('#easy .ez-wx'),rn:!!document.querySelector('#easy canvas.ez-rn')}}))+'\n');
           await pg.close();}
