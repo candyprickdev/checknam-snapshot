@@ -22,9 +22,8 @@ jobs:
           const info=await pg.evaluate(chk);fs.appendFileSync('info.txt',name+' '+w+': '+JSON.stringify(info)+' errs='+JSON.stringify(errs)+'\n');
           if(full)await pg.screenshot({path:`${name}-${w}.png`,fullPage:true});else await pg.screenshot({path:`${name}-${w}.png`});await pg.close();};
           const L={nbi_th:'light',nbi_zone:'นนทบุรี/บางใหญ่',nbi_zp_seen:'1'};
-          for(const [w,h] of [[320,640],[360,740],[414,896],[600,960],[834,1112],[1280,800],[1920,1080]]){await go('full',S+'/',w,h,{...L,nbi_mode:'full'},w===360||w===834||w===1280||w===1920);await go('easy',S+'/',w,h,{...L,nbi_mode:'easy'},w===834||w===1920);}
-          for(const pth of ['zones','chaophraya','changelog','z/1']) for(const [w,h] of [[360,740],[1280,800]]) await go(pth.replace('/','_'),S+'/'+pth,w,h,{...L},true);
-          await go('fulldark',S+'/',390,844,{...L,nbi_mode:'full',nbi_th:'dark'},false);
+          for(const [w,h] of [[320,640],[360,740]]){await go('full',S+'/',w,h,{...L,nbi_mode:'full'},false);}
+          await go('fullbkk',S+'/',320,640,{...L,nbi_mode:'full',nbi_zone:'กรุงเทพมหานคร/ป้อมปราบศัตรูพ่าย'},false);
           await b.close();})();
           JS
           node t.js 2> err.txt || true
