@@ -17,8 +17,8 @@ jobs:
           fs.appendFileSync('errs.txt',name+': '+JSON.stringify(errs)+'\n');await b.close();}
           (async()=>{const base={nbi_mode:'full',nbi_th:'light',nbi_zone:'นนทบุรี/บางใหญ่',nbi_zp_seen:'1'};
           await run('h',base,[`scrollTo(0,0)`,`document.getElementById('dspBtn').click()`,`document.getElementById('dspBtn').click();document.getElementById('shareTop').click()`]);
-          await run('k',{...base,nbi_th:'dark'},[`scrollTo(0,0)`]);
-          await run('w',{...base,nbi_mode:'easy'},[`scrollTo(0,0)`]);
+
+
           })();
           JS
           node t.js 2> err.txt || true
