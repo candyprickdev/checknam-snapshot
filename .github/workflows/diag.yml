@@ -6,8 +6,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir d; cd d
-          UA="checknam.com (+https://checknam.com)"
-          for u in "c1 https://www.tmd.go.th/uploads/CAP/en/CAPTMD20261011062839_2.xml" "c2 https://www.tmd.go.th/uploads/CAP/en/CAPTMD20261011062847_2.xml" "c1th https://www.tmd.go.th/uploads/CAP/th/CAPTMD20261011062839_2.xml" "capth https://www.tmd.go.th/api/xml/CAP"; do set -- $u; curl -sS -m 40 -A "$UA" -o "$1.xml" -w "$1 %{http_code} %{size_download} %{content_type}\n" "$2" >> st.txt 2>&1 || echo "$1 fail" >> st.txt; done
+          sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
+          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const S='https://checknam.com';
+          const CSS=`.tw{margin:2px 0 14px;border-radius:16px;background:color-mix(in srgb,var(--lv4) 9%,var(--card,#fff));border:1px solid color-mix(in srgb,var(--lv4) 28%,transparent);overflow:hidden;position:relative}
+          .tw::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--lv4)}
+          .tw summary{list-style:none;display:grid;grid-template-columns:40px 1fr 20px;gap:12px;align-items:center;padding:12px 14px 12px 18px;cursor:pointer}
+          .tw summary::-webkit-details-marker{display:none}
+          .tw .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--lv4) 16%,transparent);color:var(--lv4-ink)}
+          .tw .ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+          .tw .k{display:block;font-size:.74rem;letter-spacing:.01em;color:var(--lv4-ink);font-weight:600;margin-bottom:1px}
+          .tw .t{display:block;font-size:1.06rem;font-weight:700;color:var(--ink);line-height:1.35}
+          .tw .s{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+          .tw .ch{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;transition:transform .2s}
+          .tw[open] .ch{transform:rotate(180deg)}
+          .tw .bar{height:3px;margin:0 14px 0 18px;border-radius:2px;background:color-mix(in srgb,var(--lv4) 18%,transparent);position:relative;top:-6px}
+          .tw .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--lv4)}
+          .tw .b{padding:2px 16px 14px 18px;font-size:.88rem;line-height:1.6;color:var(--ink)}
+          .tw .b p{margin:6px 0}.tw .m{font-size:.76rem;color:var(--muted)}.tw .m a{color:var(--river-ink)}`;
+          const HTML=`<details class="tw"><summary><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 15a4.5 4.5 0 1 1 .9-8.9A5.5 5.5 0 0 1 18.5 8 3.5 3.5 0 0 1 17.5 15"/><path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"/></svg></span><span><span class="k">กรมอุตุนิยมวิทยาเตือน</span><span class="t">ฝนตกหนักในพื้นที่ของคุณ</span><span class="s">มีผลถึง 18:00 น. วันนี้ · เหลืออีก 8 ชม.</span></span><svg class="ch" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary><div class="bar"><i style="width:33%"></i></div>
+          <div class="b"><p>ขอให้ประชาชนระวังอันตรายจากฝนตกหนักถึงหนักมากและฝนที่ตกสะสม ซึ่งอาจทำให้เกิดน้ำท่วมฉับพลันและน้ำป่าไหลหลาก โดยเฉพาะริมทางน้ำใกล้เชิงเขาและที่ลุ่ม</p><p class="m">ครอบคลุม กรุงเทพฯ นนทบุรี ปทุมธานี สมุทรปราการ อยุธยา และอีก 9 จังหวัด · ออกประกาศ 05:40 น. วันนี้ · ข้อมูลเตือนภัยกรมอุตุนิยมวิทยา <a href="#">ดูประกาศต้นฉบับ</a></p></div></details>`;
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          for (const [n,th,open] of [['m1','light',0],['m2','light',1],['m3','dark',0]]){const cx=await b.createBrowserContext();const pg=await cx.newPage();await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument(new Function(`localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','${th}');localStorage.setItem('nbi_zone','นนทบุรี/บางใหญ่');`));
+          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,22000));
+          out[n]=await pg.evaluate((CSS,HTML,open)=>{const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);const x=document.querySelector('#easy .ez-x');x.insertAdjacentHTML('beforebegin',HTML);if(open)document.querySelector('.tw').open=true;const b=document.getElementById('ezBar');if(b)b.remove();scrollTo(0,0);return !!document.querySelector('.tw')},CSS,HTML,open);
+          await new Promise(r=>setTimeout(r,800));await pg.screenshot({path:n+'.png',clip:{x:0,y:0,width:390,height:760}});await cx.close();}
+          require('fs').writeFileSync('out.json',JSON.stringify(out));await b.close();})();
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
