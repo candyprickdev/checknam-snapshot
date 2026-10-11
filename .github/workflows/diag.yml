@@ -12,10 +12,10 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for(const z of ['เพชรบุรี/เขาย้อย','ปราจีนบุรี/บ้านสร้าง']){const pg=await b.newPage();
+          for(const z of ['นนทบุรี/บางใหญ่','นนทบุรี/บางบัวทอง','นนทบุรี/ปากเกร็ด']){const pg=await b.newPage();
           await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone',z);},z);
           await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(45000);
-          out[z]=await pg.evaluate(()=>({src:NEWS_SRC,news:NEWS&&{err:NEWS.err,am:(NEWS.am||[]).map(x=>x.s+' | '+x.t),pv:(NEWS.pv||[]).map(x=>x.s+' | '+x.t)}}));await pg.close();}
+          out[z]=await pg.evaluate(()=>{const rc=riskCore();return {L:rc.L.name,score:rc.score,floT:rc.floT,nearCP:rc.nearCP,dCP:rc.dCP,tide:TIDE_NEXT&&{t:new Date(TIDE_NEXT.t).toISOString(),est:TIDE_NEXT.est,bank:TIDE_NEXT.bank},ups:(rc.ups||[]).map(u=>nm(u.d)+' '+u.d.storage_percent+' '+u.river+' '+u.along.toFixed(0)+'km'),f:rc.f.map(x=>x.t+': '+x.v+' ['+x.s+'] '+String(x.d).replace(/<[^>]+>/g,'').slice(0,260))};});await pg.close();}
           fs.writeFileSync('st.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
