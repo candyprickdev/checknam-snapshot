@@ -9,13 +9,9 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
           UA='checknam.com (+https://checknam.com)'
-          curl -s -m 30 -A "$UA" https://www.thaiwater.net/ > tw.html || true
-          for js in $(grep -oE 'src="[^"]+\.js"' tw.html | sed 's/src="//;s/"$//' | head -20); do case $js in http*) u=$js;; *) u=https://www.thaiwater.net/${js#/};; esac; curl -s -m 60 -A "$UA" "$u" >> all.js || true; done
-          grep -oE '"[a-z_/]*(graph|yearly|compare|history|max)[a-z_/]*"' all.js | sort | uniq -c | sort -rn | head -80 > ep.txt || true
-          grep -oE 'public/[a-zA-Z_/]+' all.js | sort | uniq -c | sort -rn | head -120 >> ep.txt || true
-          grep -oE '.{300}waterlevel_graph_year.{500}' all.js > ctx.txt || true
-          grep -oE '.{200}waterlevel_graph_oldcode.{300}' all.js | head -2 >> ctx.txt || true
-          rm -f all.js
+          for id in 2683 151; do curl -s -m 60 -A "$UA" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=$id&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011" > y$id.json || true; sleep 2; done
+          curl -s -m 60 -A "$UA" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=2683&year=2022" > y1.json || true
+          ls -la > ls.txt
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
