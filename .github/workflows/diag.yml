@@ -8,22 +8,12 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          const pg=await b.newPage();await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone','ปราจีนบุรี/บ้านสร้าง');});
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(60000);
-          const r=await pg.evaluate(()=>{const S=DATA.filter(d=>/ปราจีน|บางปะกง|นครนายก|ฉะเชิงเทรา/.test((d.river_name||'')+(d.geocode&&d.geocode.province_name&&d.geocode.province_name.th||''))).map(d=>({id:d.station.id,oc:d.station.tele_station_oldcode,n:d.station.tele_station_name&&d.station.tele_station_name.th,rv:d.river_name,bank:d.station.min_bank,gl:d.station.ground_level,crit:d.station.critical_level_msl,wl:d.waterlevel_msl,pct:d.storage_percent,ag:d.agency&&d.agency.agency_shortname&&d.agency.agency_shortname.en,t:d.waterlevel_datetime}));let rb=null;try{const P=PLACES[place];rb=riverBracket(P[1],P[2]);rb=rb&&{a:rb.a&&rb.a.station.tele_station_oldcode,b:rb.b&&rb.b.station.tele_station_oldcode,low:rb.low&&rb.low.station.tele_station_oldcode};}catch(e){rb=String(e)}return {S,rb};});
-          fs.writeFileSync('st.json',JSON.stringify(r,null,1));
-          const UA={headers:{'User-Agent':'checknam.com (+https://checknam.com)'}};const OUT=[];
-          for(const id of [2683,151]){const t0=Date.now();try{const u='https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph?station_type=tele_waterlevel&station_id='+id+'&start_date=2012-01-01&end_date=2025-12-31';const res=await fetch(u,UA);const t=await res.text();let n=-1,tot=-1,f='';try{const g=JSON.parse(t).data.graph_data;tot=g.length;const v=g.filter(x=>x.value!=null);n=v.length;f=v[0]&&v[0].datetime;}catch(e){}OUT.push({id,st:res.status,bytes:t.length,ms:Date.now()-t0,n,tot,f,head:t.slice(0,120)});}catch(e){OUT.push({id,err:String(e)});}await W(2000);}
-          const tot=await pg.evaluate(()=>({all:DATA.length,bank:DATA.filter(d=>d.station&&isFinite(+d.station.min_bank)&&+d.station.min_bank!==0).length}));OUT.push(tot);
-          fs.writeFileSync('multi.json',JSON.stringify(OUT,null,1));
-          await b.close();})();
-
-          JS
-          node t.js 2> err.txt || true
+          UA='checknam.com (+https://checknam.com)'
+          curl -s -m 30 -A "$UA" https://www.thaiwater.net/ > tw.html || true
+          for js in $(grep -oE 'src="[^"]+\.js"' tw.html | sed 's/src="//;s/"$//' | head -20); do case $js in http*) u=$js;; *) u=https://www.thaiwater.net/${js#/};; esac; curl -s -m 60 -A "$UA" "$u" >> all.js || true; done
+          grep -oE '"[a-z_/]*(graph|yearly|compare|history|max)[a-z_/]*"' all.js | sort | uniq -c | sort -rn | head -80 > ep.txt || true
+          grep -oE 'public/[a-zA-Z_/]+' all.js | sort | uniq -c | sort -rn | head -120 >> ep.txt || true
+          ls -la >> ep.txt; rm -f all.js
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
