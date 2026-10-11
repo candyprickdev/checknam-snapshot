@@ -10,15 +10,12 @@ jobs:
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();await pg.setViewport({width:1440,height:900});
-          await pg.evaluateOnNewDocument(()=>{if(!sessionStorage.getItem('x')){sessionStorage.setItem('x',1);localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone','นนทบุรี/บางใหญ่');}});
-          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(16000);
-          const tw=()=>pg.evaluate(()=>{const e=document.getElementById('twarn');return (e.offsetHeight?'SHOWN ':'hidden ')+e.innerText.slice(0,80);});
-          fs.appendFileSync('sw.txt','before '+await tw()+'\n');
-          await pg.evaluate(()=>{const s=document.getElementById('place');s.value='นครปฐม/สามพราน';s.onchange({target:s});});await W(8000);
-          fs.appendFileSync('sw.txt','after samphran '+await tw()+'\n');await pg.screenshot({path:'sw1.png'});
-          await pg.evaluate(()=>{const s=document.getElementById('place');s.value='นนทบุรี/ปากเกร็ด';s.onchange({target:s});});await W(8000);
-          fs.appendFileSync('sw.txt','after pakkret '+await tw()+'\n');
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่']){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:1000,height:900});
+          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z);
+          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(18000);
+          await pg.evaluate(()=>document.getElementById('s-map').scrollIntoView());await W(3000);
+          const el=await pg.$('#map');await el.screenshot({path:z.split('/')[1]+'.png'});fs.appendFileSync('sw.txt',z+' '+JSON.stringify(errs)+'\n');await pg.close();}
           await b.close();})();
           JS
           node t.js 2> err.txt || true
