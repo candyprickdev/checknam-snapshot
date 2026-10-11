@@ -6,7 +6,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
+          mkdir d; cd d
           curl -s -m 30 -A 'checknam.com (+https://checknam.com)' 'https://api-v3.thaiwater.net/api/v1/thaiwater30/public/warning' > warning.json || true
-          curl -s -m 30 -A 'checknam.com (+https://checknam.com)' 'https://data.tmd.go.th/api/WeatherWarningNews/v2/?uid=api&ukey=api12345' > tmdnews.xml || true
+          npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+          const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
+          fs.writeFileSync('zs.txt',zs.join('\n'));
+          for(const [z,w,h,m] of [[zs[0],390,844,'easy'],[zs[0],1440,900,'easy'],[zs[0],1440,900,'full'],['นนทบุรี/บางใหญ่',390,844,'easy']]){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:w,height:h});
+          await pg.evaluateOnNewDocument((z,m)=>{localStorage.setItem('nbi_mode',m);localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z,m);
+          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(17000);
+          const r=await pg.evaluate(()=>{const e=document.getElementById('twarn');if(e.offsetHeight)scrollTo(0,e.getBoundingClientRect().top+scrollY-150);return (e.offsetHeight?'SHOWN ':'hidden ')+e.innerText.slice(0,300);});
+          await pg.evaluate(()=>{const d=document.querySelector('#twarn details');if(d)d.open=true;});await W(800);
+          fs.appendFileSync('sw.txt',m+w+' '+z+' '+r.replace(/\n/g,' | ')+' '+JSON.stringify(errs)+'\n');await pg.screenshot({path:m+w+'.png'});await pg.close();}
+          await b.close();})();
+
+          JS
+          node t.js 2> err.txt || true
+          rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
