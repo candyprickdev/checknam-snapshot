@@ -6,19 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
-          mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://checknam.com';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          for (const th of ['light','dark']){const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument(new Function(`localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','${th}');localStorage.setItem('nbi_zone','นนทบุรี/บางใหญ่');`));
-          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,24000));
-          out[th]=await pg.evaluate(()=>{const x=document.querySelector('#easy .ez-x');const old=x.querySelector('.ez-wx');if(old)old.remove();x.insertAdjacentHTML('afterbegin','<div class="ez-wx rain r2" aria-hidden="true">'+cloudLayers('rain',true,20)+'</div>');return !!x.querySelector('.cl');});
-          await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();scrollTo(0,0)});await new Promise(r=>setTimeout(r,800));await pg.screenshot({path:'c-'+th+'.png',clip:{x:0,y:0,width:390,height:700}});out[th+'e']=errs;await cx.close();}
-          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
-          JS
-          node t.js 2> err.txt || true
-          rm -rf node_modules package*.json t.js
+          mkdir d; cd d
+          UA="checknam.com (+https://checknam.com)"
+          for u in "warn https://tmd.go.th/api/xml/warning-news" "cap https://www.tmd.go.th/en/api/xml/CAP" "storm https://tmd.go.th/en/api/xml/storm-tracking" "bkk https://tmd.go.th/api/xml/region-daily-forecast?regionid=7"; do set -- $u; curl -sS -m 40 -A "$UA" -o "$1.xml" -w "$1 %{http_code} %{size_download} %{content_type}\n" "$2" >> st.txt 2>&1 || echo "$1 fail" >> st.txt; done
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
