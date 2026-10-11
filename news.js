@@ -6,6 +6,8 @@ const FEEDS = [
   ["มติชน", "https://www.matichon.co.th/feed"], ["มติชน", "https://www.matichon.co.th/region/feed"], ["มติชน", "https://www.matichon.co.th/local/feed"],
   ["ข่าวสด", "https://www.khaosod.co.th/feed"], ["ข่าวสด", "https://www.khaosod.co.th/around-thailand/feed"], ["ข่าวสด", "https://www.khaosod.co.th/breaking-news/feed"],
   ["ประชาชาติธุรกิจ", "https://www.prachachat.net/feed"], ["ไทยโพสต์", "https://www.thaipost.net/feed/"], ["เดลินิวส์", "https://www.dailynews.co.th/news/feed/"],
+  ["ผู้จัดการออนไลน์", "https://mgronline.com/store/rss/index.xml"], ["ผู้จัดการออนไลน์", "https://mgronline.com/store/rss/local.xml"], ["ผู้จัดการออนไลน์", "https://mgronline.com/store/rss/around.xml"],
+  ["ผู้จัดการออนไลน์", "https://mgronline.com/store/rss/south.xml"], ["ผู้จัดการออนไลน์", "https://mgronline.com/store/rss/qol.xml"],
   ["INN", "https://www.innnews.co.th/feed/"], ["The Reporters", "https://www.thereporters.co/feed/"], ["เชียงใหม่นิวส์", "https://www.chiangmainews.co.th/feed/"],
 ];
 // หัวข่าวที่มีคำเหล่านี้ถือเป็นข่าวน้ำ/ฝน · ถ้าหัวข่าวไม่มี แต่ต้นข่าวมีคำหลักชัดเจน ก็นับด้วย
