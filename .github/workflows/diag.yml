@@ -15,12 +15,10 @@ jobs:
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
           fs.writeFileSync('zs.txt',zs.join('\n'));
-          for(const [z,w,h,m] of [[zs[0],390,844,'easy'],[zs[0],1440,900,'easy'],[zs[0],1440,900,'full'],['นนทบุรี/บางใหญ่',390,844,'easy']]){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:w,height:h});
-          await pg.evaluateOnNewDocument((z,m)=>{localStorage.setItem('nbi_mode',m);localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z,m);
-          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(17000);
-          const r=await pg.evaluate(()=>{const e=document.getElementById('twarn');if(e.offsetHeight)scrollTo(0,e.getBoundingClientRect().top+scrollY-150);return (e.offsetHeight?'SHOWN ':'hidden ')+e.innerText.slice(0,300);});
-          await pg.evaluate(()=>{const d=document.querySelector('#twarn details');if(d)d.open=true;});await W(800);
-          fs.appendFileSync('sw.txt',m+w+' '+z+' '+r.replace(/\n/g,' | ')+' '+JSON.stringify(errs)+'\n');await pg.screenshot({path:m+w+'.png'});await pg.close();}
+          {const pg=await b.newPage();await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone','นราธิวาส/เจาะไอร้อง');});
+          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(15000);
+          const r=await pg.evaluate(async()=>{const x=await fetch('/api/tw/warning');const t=await x.text();return {st:x.status,t:t.slice(0,200),n:(typeof HIIW!=='undefined'&&HIIW)?HIIW.length:'undef',f:(typeof hiiFor==='function')?hiiFor().length:'nofn',now:new Date().toISOString(),h0:HIIW&&HIIW[0]?new Date(HIIW[0].t).toISOString():''};});
+          fs.writeFileSync('dbg.txt',JSON.stringify(r,null,1));await pg.close();}
           await b.close();})();
 
           JS
