@@ -8,23 +8,7 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-          const chk=()=>{const cw=document.documentElement.clientWidth,sw=document.documentElement.scrollWidth;const bad=[];
-          const clipped=e=>{for(let a=e.parentElement;a&&a!==document.body;a=a.parentElement){const s=getComputedStyle(a);if(/(hidden|auto|scroll|clip)/.test(s.overflowX)){const r=a.getBoundingClientRect();if(r.right<=cw+1)return true;}if(s.position==='fixed')return true;}return false;};
-          document.querySelectorAll('body *').forEach(e=>{const s=getComputedStyle(e);if(s.display==='none'||s.visibility==='hidden'||s.position==='fixed')return;const r=e.getBoundingClientRect();if(r.width>0&&r.height>0&&(r.right>cw+1||r.left<-1)&&!clipped(e))bad.push(((e.id?'#'+e.id:'')+'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0]+'<'+e.tagName.toLowerCase()+'> L'+Math.round(r.left)+' R'+Math.round(r.right)));});
-          return {cw,sw,H:document.documentElement.scrollHeight,bad:[...new Set(bad)].slice(0,30)};};
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const [z,m,w,h] of [['นครปฐม/สามพราน','easy',390,844],['นครปฐม/สามพราน','easy',834,1112],['นครปฐม/สามพราน','easy',1440,900],['สุราษฎร์ธานี/เมืองสุราษฎร์ธานี','easy',1920,1080],['นครปฐม/สามพราน','full',390,844],['นครปฐม/สามพราน','full',1440,900]]){const pg=await b.newPage();await pg.setViewport({width:w,height:h});
-          await pg.evaluateOnNewDocument((z,m)=>{localStorage.setItem('nbi_mode',m);localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z,m);
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(16000);
-          const r=await pg.evaluate(()=>{const e=document.getElementById('twarn');const b=e.getBoundingClientRect();return {h:Math.round(b.height),y:Math.round(b.top+scrollY),txt:e.innerText.slice(0,120)};});
-          fs.appendFileSync('tw.txt',m+' '+w+' '+z+' '+JSON.stringify(r)+'\n');
-          await pg.evaluate(()=>{const e=document.getElementById('twarn');if(e.offsetHeight)scrollTo(0,e.getBoundingClientRect().top+scrollY-200);});await W(600);
-          await pg.screenshot({path:m+'-'+w+'.png'});await pg.close();}
-          await b.close();})();
-          JS
-                    node t.js 2> err.txt || true
-          rm -rf node_modules package*.json t.js
+          for u in "https://ews.dwr.go.th/" "https://ewt.dwr.go.th/" "https://catalog.disaster.go.th/api/3/action/package_search?q=%E0%B9%80%E0%B8%95%E0%B8%B7%E0%B8%AD%E0%B8%99&rows=5" "https://www.disaster.go.th/rss" "https://alerthub.wmo.int/" "https://severeweather.wmo.int/v2/json/wmo_all.json" "https://cap-sources.s3.amazonaws.com/th-tmd-th/rss.xml" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/warning" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/thailand_main" "https://www.rid.go.th/index.php/th/rss" "https://www.thaipbs.or.th/rss/news.xml" "https://news.thaipbs.or.th/rss/news" "https://www.tmd.go.th/api/xml/weather-report" "https://data.tmd.go.th/api/WeatherWarningNews/v2/?uid=api&ukey=api12345" "https://www.thaiwater.net/" "https://tiwrm.hii.or.th/" ; do
+            echo "== $u" >> probe.txt; curl -s -m 20 -L -A "checknam.com probe (+https://checknam.com)" -o b -w "%{http_code} %{content_type} %{size_download}\n" "$u" >> probe.txt; head -c 500 b | tr -d '\000' >> probe.txt; echo >> probe.txt; done
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
