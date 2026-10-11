@@ -15,14 +15,16 @@ jobs:
           document.querySelectorAll('body *').forEach(e=>{const s=getComputedStyle(e);if(s.display==='none'||s.visibility==='hidden'||s.position==='fixed')return;const r=e.getBoundingClientRect();if(r.width>0&&r.height>0&&(r.right>cw+1||r.left<-1)&&!clipped(e))bad.push(((e.id?'#'+e.id:'')+'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0]+'<'+e.tagName.toLowerCase()+'> L'+Math.round(r.left)+' R'+Math.round(r.right)));});
           return {cw,sw,H:document.documentElement.scrollHeight,bad:[...new Set(bad)].slice(0,30)};};
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const z of ['นนทบุรี/ปากเกร็ด','นนทบุรี/บางใหญ่']){const pg=await b.newPage();await pg.setViewport({width:1440,height:900});
-          pg.on('response',async r=>{if(r.url().includes('/api/tmdwarn')){try{fs.appendFileSync('warn.txt',z+' '+r.status()+' '+(await r.text()).slice(0,1500)+'\n');}catch(e){}}});
-          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone',z);},z);
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(15000);await pg.screenshot({path:z.split('/')[1]+'.png'});await pg.close();}
+          for(const [z,m,w,h] of [['นครปฐม/สามพราน','easy',390,844],['นครปฐม/สามพราน','easy',834,1112],['นครปฐม/สามพราน','easy',1440,900],['สุราษฎร์ธานี/เมืองสุราษฎร์ธานี','easy',1920,1080],['นครปฐม/สามพราน','full',390,844],['นครปฐม/สามพราน','full',1440,900]]){const pg=await b.newPage();await pg.setViewport({width:w,height:h});
+          await pg.evaluateOnNewDocument((z,m)=>{localStorage.setItem('nbi_mode',m);localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z,m);
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(16000);
+          const r=await pg.evaluate(()=>{const e=document.getElementById('twarn');const b=e.getBoundingClientRect();return {h:Math.round(b.height),y:Math.round(b.top+scrollY),txt:e.innerText.slice(0,120)};});
+          fs.appendFileSync('tw.txt',m+' '+w+' '+z+' '+JSON.stringify(r)+'\n');
+          await pg.evaluate(()=>{const e=document.getElementById('twarn');if(e.offsetHeight)scrollTo(0,e.getBoundingClientRect().top+scrollY-200);});await W(600);
+          await pg.screenshot({path:m+'-'+w+'.png'});await pg.close();}
           await b.close();})();
           JS
-          curl -s 'https://www.tmd.go.th/api/xml/CAP' > cap.xml; for u in $(grep -o 'https://www.tmd.go.th/uploads/CAP/[^<]*' cap.xml | head -6); do curl -s "$u" > "$(basename $u)"; done
-          node t.js 2> err.txt || true
+                    node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
