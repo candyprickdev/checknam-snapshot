@@ -17,15 +17,8 @@ jobs:
           fs.writeFileSync('zs.txt',zs.join('\n'));
           {const pg=await b.newPage();await pg.setViewport({width:430,height:900});
           await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_zone','ปราจีนบุรี/บ้านสร้าง');});
-          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(18000);await pg.evaluate(()=>document.getElementById('s-map').scrollIntoView());await W(6000);
-          const r=await pg.evaluate(()=>{const kmd=(a,b,c,d)=>Math.hypot((a-c)*111,(b-d)*108);const RST=riverStations();const out=[];
-            RIVER_GEO.forEach((r,ri)=>{if(r.h)return;const grp=(RGROUP[r.n]||[]).concat(r.n);const ids=new Set([...(r.s||[]),...(RST.get(ri)||[])].map(String));
-              const st=DATA.filter(d=>lineOk(d)&&(grp.includes(d.river_name)||ids.has(String(d.station.id)))).map(d=>({la:+d.station.tele_station_lat,lo:+d.station.tele_station_long,d,lv:mapLv(d)}));if(!st.length)return;
-              const at=(la,lo)=>{let b=null,dm=1e9;for(const q of st){const dd=kmd(q.la,q.lo,la,lo);if(dd<dm){dm=dd;b=q;}}return dm<=15?b:null;};
-              r.l.forEach((l,li)=>{const S=[];for(let i=1;i<l.length;i++)S.push(at((l[i-1][0]+l[i][0])/2,(l[i-1][1]+l[i][1])/2));
-                for(let i=0;i<S.length;){if(S[i]){i++;continue;}let j=i,k=0;while(j<S.length&&!S[j]){k+=kmd(l[j][0],l[j][1],l[j+1][0],l[j+1][1]);j++;}
-                  const A=S[i-1],B=S[j];if(k>=3)out.push({n:r.n,maj:!!r.r,m:!!r.m,li,km:+k.toFixed(1),a:A?[nm(A.d),A.lv]:null,b:B?[nm(B.d),B.lv]:null,kind:A&&B?(k<=60?'filled':'long'):(A||B?'open':'none'),mid:[+l[Math.floor((i+j)/2)][0].toFixed(3),+l[Math.floor((i+j)/2)][1].toFixed(3)]});i=j;}});});
-            let est=[];try{drawFlow();FLOW.eachLayer(l=>{if(l.options&&l.options.dashArray==='7 6'){const t=l.getTooltip&&l.getTooltip();est.push(t?String(t.getContent()).replace(/<[^>]+>/g,' ').slice(0,160):'?');}});}catch(e){est=['err '+e];} const rc=riskCore(); colorZones(); return {est, bs:[rc.L.name,rc.nearHow], z:['ปราจีนบุรี/บ้านสร้าง','สมุทรสาคร/กระทุ่มแบน','นครนายก/องครักษ์','ฉะเชิงเทรา/บางน้ำเปรี้ยว'].map(k=>[k,ZINFO[k]&&ZINFO[k].t]), gaps:out.filter(g=>!g.m&&g.kind!=='none').sort((x,y)=>y.km-x.km)};});
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(18000);
+          const r=await pg.evaluate(async()=>{const [n,a,o,pv]=PLACES['ปราจีนบุรี/บ้านสร้าง'];const x=await fetch(`/api/gflood/hist?lat=${a}&lon=${o}&name=${encodeURIComponent(n)}&prov=${encodeURIComponent(pv)}&v=3`);const j=await x.json();return {st:x.status,keys:Object.keys(j),years:j.years,rai:j.rai,ap:j.ap,fmax:j.fmax,top:j.top,cache:x.headers.get('cf-cache-status')+' '+x.headers.get('age')};});
           fs.writeFileSync('bs.json',JSON.stringify(r,null,1));await pg.close();}
           await b.close();})();
 
