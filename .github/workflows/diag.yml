@@ -16,12 +16,10 @@ jobs:
           await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(60000);
           const r=await pg.evaluate(()=>{const S=DATA.filter(d=>/ปราจีน|บางปะกง|นครนายก|ฉะเชิงเทรา/.test((d.river_name||'')+(d.geocode&&d.geocode.province_name&&d.geocode.province_name.th||''))).map(d=>({id:d.station.id,oc:d.station.tele_station_oldcode,n:d.station.tele_station_name&&d.station.tele_station_name.th,rv:d.river_name,bank:d.station.min_bank,gl:d.station.ground_level,crit:d.station.critical_level_msl,wl:d.waterlevel_msl,pct:d.storage_percent,ag:d.agency&&d.agency.agency_shortname&&d.agency.agency_shortname.en,t:d.waterlevel_datetime}));let rb=null;try{const P=PLACES[place];rb=riverBracket(P[1],P[2]);rb=rb&&{a:rb.a&&rb.a.station.tele_station_oldcode,b:rb.b&&rb.b.station.tele_station_oldcode,low:rb.low&&rb.low.station.tele_station_oldcode};}catch(e){rb=String(e)}return {S,rb};});
           fs.writeFileSync('st.json',JSON.stringify(r,null,1));
-          const UA={headers:{'User-Agent':'checknam.com (+https://checknam.com)'}};const OUT={};
-          for(const s of r.S.filter(s=>['Kgt.1','BPK003','PRC005','Kgt.6','Kgt.3','BPK004','Ny.1B','Kgt.15B'].includes(s.oc))){OUT[s.oc]={bank:s.bank,now:s.wl,y:{}};
-           for(let y=2008;y<=2025;y++){try{const u='https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph?station_type=tele_waterlevel&station_id='+s.id+'&start_date='+y+'-01-01&end_date='+y+'-12-31';const res=await fetch(u,UA);const t=await res.text();let g=[];try{g=JSON.parse(t).data.graph_data||[];}catch(e){OUT[s.oc].y[y]='bad '+res.status+' '+t.slice(0,80);continue;}
-            const v=g.filter(x=>x.value!=null);if(!v.length){OUT[s.oc].y[y]={n:0,tot:g.length};continue;}const m=v.reduce((a,b)=>b.value>a.value?b:a);const sv=v.map(x=>x.value).sort((a,b)=>a-b);
-            OUT[s.oc].y[y]={n:v.length,tot:g.length,max:m.value,at:m.datetime,p50:sv[sv.length>>1],p01:sv[Math.floor(sv.length*.01)],first:v[0].datetime};}catch(e){OUT[s.oc].y[y]='err '+e;}await W(1200);}
-           fs.writeFileSync('yr.json',JSON.stringify(OUT,null,1));}
+          const UA={headers:{'User-Agent':'checknam.com (+https://checknam.com)'}};const OUT=[];
+          for(const id of [2683,151]){const t0=Date.now();try{const u='https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph?station_type=tele_waterlevel&station_id='+id+'&start_date=2012-01-01&end_date=2025-12-31';const res=await fetch(u,UA);const t=await res.text();let n=-1,tot=-1,f='';try{const g=JSON.parse(t).data.graph_data;tot=g.length;const v=g.filter(x=>x.value!=null);n=v.length;f=v[0]&&v[0].datetime;}catch(e){}OUT.push({id,st:res.status,bytes:t.length,ms:Date.now()-t0,n,tot,f,head:t.slice(0,120)});}catch(e){OUT.push({id,err:String(e)});}await W(2000);}
+          const tot=await pg.evaluate(()=>({all:DATA.length,bank:DATA.filter(d=>d.station&&isFinite(+d.station.min_bank)&&+d.station.min_bank!==0).length}));OUT.push(tot);
+          fs.writeFileSync('multi.json',JSON.stringify(OUT,null,1));
           await b.close();})();
 
           JS
