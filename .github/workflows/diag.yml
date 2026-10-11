@@ -9,8 +9,7 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
           UA='checknam.com (+https://checknam.com)'
-          for id in 2683 151; do curl -s -m 60 -A "$UA" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=$id&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011" > y$id.json || true; sleep 2; done
-          curl -s -m 60 -A "$UA" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=2683&year=2022" > y1.json || true
+          for q in "151&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2014,2013" "151&year=2022" "170&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015"; do curl -s -m 120 -A "$UA" -o "q${q%%&*}_${#q}.json" -w "$q %{http_code} %{size_download} %{time_total}\n" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=$q" >> w.txt || echo "$q fail $?" >> w.txt; sleep 2; done
           ls -la > ls.txt
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
