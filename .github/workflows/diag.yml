@@ -8,9 +8,19 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          UA='checknam.com (+https://checknam.com)'
-          for q in "151&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015,2014,2013" "151&year=2022" "170&year=2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015"; do curl -s -m 120 -A "$UA" -o "q${q%%&*}_${#q}.json" -w "$q %{http_code} %{size_download} %{time_total}\n" "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year?station_type=tele_waterlevel&station_id=$q" >> w.txt || echo "$q fail $?" >> w.txt; sleep 2; done
-          ls -la > ls.txt
+          npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+          for(const [z,th] of [['ปราจีนบุรี/บ้านสร้าง','dark'],['นนทบุรี/บางใหญ่','light'],['ฉะเชิงเทรา/บางน้ำเปรี้ยว','dark'],['สุราษฎร์ธานี/พุนพิน','light']]){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument((z,th)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);},z,th);
+          pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(75000);
+          const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('.ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
+          const el=h.asElement(); if(el){await el.evaluate(e=>{const d=e.querySelector('details');if(d)d.open=true;});await el.screenshot({path:z.split('/')[1]+'.png'});fs.appendFileSync('txt.txt',z+'\n'+await el.evaluate(e=>e.innerText)+'\n\n');} await pg.close();}
+          await b.close();})();
+          JS
+          node t.js 2>> err.txt || true
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
