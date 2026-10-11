@@ -15,9 +15,9 @@ jobs:
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
           fs.writeFileSync('zs.txt',zs.join('\n'));
-          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่']){const pg=await b.newPage();await pg.setViewport({width:430,height:900,deviceScaleFactor:2});
+          for(const z of ['ปราจีนบุรี/บ้านสร้าง']){const pg=await b.newPage();await pg.setViewport({width:430,height:900,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z);
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(30000);
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(70000);fs.writeFileSync('fhn.json',JSON.stringify(await pg.evaluate(async()=>{const k=fhKey();const z=await zbLoad();return {fhn:FHN[k],z:z&&{bb:z.bb,approx:z.approx},ap:FH[k]&&FH[k].ap};})));
           const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('#easy .ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
           await h.asElement().screenshot({path:z.split('/')[1]+'.png'});await pg.close();}
           await b.close();})();
