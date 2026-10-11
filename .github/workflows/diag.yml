@@ -9,10 +9,11 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
           UA='Mozilla/5.0 (compatible; checknam.com news reader; +https://checknam.com)'
-          for h in https://www.thairath.co.th/ https://www.thairath.co.th/news/local https://www.dailynews.co.th/ https://www.dailynews.co.th/regional/ https://mgronline.com/ https://mgronline.com/local https://mgronline.com/rss ; do echo "### $h" >> w.txt; curl -sL -m 25 -A "$UA" -D hd.txt -o pg.html -w "%{http_code} %{size_download}\n" "$h" >> w.txt; grep -i "^cf-mitigated\|^server:" hd.txt >> w.txt; grep -oiE '<link[^>]+(rss|atom)[^>]*>|href="[^"]*(rss|feed)[^"]*"' pg.html | sort -u | head -30 >> w.txt; done
-          for u in https://www.thairath.co.th/rss/news https://www.thairath.co.th/rss/news/local https://www.thairath.co.th/rss https://www.dailynews.co.th/feed/ https://www.dailynews.co.th/regional/feed/ https://www.dailynews.co.th/category/regional/feed/ https://www.dailynews.co.th/news/regional/feed/ https://mgronline.com/rss/local https://mgronline.com/rss/politics https://mgronline.com/rss/news https://mgronline.com/rss/latest https://mgronline.com/rss/onlinesection/local https://mgronline.com/rss/local.xml ; do n=$(echo $u | sed 's#https://##;s#[/.]#_#g'); curl -sL -m 25 -A "$UA" -o "f_$n.xml" -w "$u %{http_code} %{size_download} %{content_type}\n" "$u" >> w.txt || echo "$u fail" >> w.txt; done
+          curl -sL -m 25 -A "$UA" https://mgronline.com/ | grep -oE 'href="https://mgronline.com/[a-z]+"' | sort -u > w.txt
+          for x in index local politics crime qol around south northeast north east central breakingnews latest daily; do u=https://mgronline.com/store/rss/$x.xml; curl -sL -m 25 -A "$UA" -o "f_$x.xml" -w "$u %{http_code} %{size_download}\n" "$u" >> w.txt; done
           for f in f_*.xml; do echo "== $f $(grep -o '<item' $f | wc -l) items; $(grep -o '<pubDate>[^<]*' $f | head -1) | $(grep -o '<pubDate>[^<]*' $f | tail -1)"; done >> w.txt
-          rm -f f_*.xml pg.html hd.txt
+          head -c 1500 f_local.xml >> w.txt
+          rm -f f_*.xml
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
