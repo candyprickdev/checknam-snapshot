@@ -9,18 +9,20 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:1});
-          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_zone','นนทบุรี/บางใหญ่');});
-          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,25000));
-          for(let y=0;y<30000;y+=700){await pg.evaluate(y=>scrollTo(0,y),y);await new Promise(r=>setTimeout(r,250));}
-          await pg.evaluate(()=>scrollTo(0,0));await new Promise(r=>setTimeout(r,1500));
-          const out=await pg.evaluate(()=>{const R=[];const vis=e=>{const s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&e.offsetHeight>0};
-          document.querySelectorAll('header, nav, #s-sum > *, .wrap > section, .wrap > div, .wrap > aside, footer').forEach(e=>{if(!vis(e))return;const r=e.getBoundingClientRect();R.push({tag:e.tagName,id:e.id,cls:e.className&&String(e.className).slice(0,40),y:Math.round(r.top+scrollY),h:Math.round(r.height),txt:e.innerText.replace(/\s+/g,' ').slice(0,700)});});return R;});
-          require('fs').writeFileSync('out.json',JSON.stringify({errs,out},null,1));
-          const H=await pg.evaluate(()=>document.documentElement.scrollHeight);
-          for(let i=0,y=0;y<H&&i<14;i++,y+=1600){await pg.screenshot({path:`f${String(i).padStart(2,'0')}.png`,clip:{x:0,y,width:390,height:Math.min(1600,H-y)},captureBeyondViewport:true});}
-          await b.close();})();
+          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
+          async function run(name,ls,steps){const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
+          await pg.evaluateOnNewDocument(ls=>{for(const k in ls)localStorage.setItem(k,ls[k]);},ls);
+          await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await W(22000);
+          let i=0;for(const s of steps){await pg.evaluate(s);await W(1200);await pg.screenshot({path:`${name}${i++}.png`});}
+          fs.appendFileSync('errs.txt',name+': '+JSON.stringify(errs)+'\n');await b.close();}
+          (async()=>{const base={nbi_mode:'full',nbi_th:'light',nbi_zone:'นนทบุรี/บางใหญ่',nbi_zp_seen:'1'};
+          const top=()=>{const n=document.querySelector('nav.zone');scrollTo(0,n.getBoundingClientRect().top+scrollY-12);};
+          await run('a',base,[`(${top})()`,`document.getElementById('zhTg').click();(${top})()`,`document.getElementById('zpBtn').click()`]);
+          await run('b',{...base,nbi_pin:JSON.stringify({la:13.8616,lo:100.4062})},[`(${top})()`,`document.getElementById('zhTg').click()`]);
+          await run('c',{...base,nbi_zone:'กรุงเทพมหานคร/บางรัก'},[`(${top})()`]);
+          await run('e',{...base,nbi_mode:'easy'},[`scrollTo(0,0)`,`document.getElementById('ezPick').click()`]);
+          await run('d',{...base,nbi_th:'dark'},[`(${top})()`,`document.getElementById('zhTg').click()`]);
+          })();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
