@@ -8,6 +8,6 @@ jobs:
       - run: |
           mkdir d; cd d
           UA="checknam.com (+https://checknam.com)"
-          for u in "warn https://tmd.go.th/api/xml/warning-news" "cap https://www.tmd.go.th/en/api/xml/CAP" "storm https://tmd.go.th/en/api/xml/storm-tracking" "bkk https://tmd.go.th/api/xml/region-daily-forecast?regionid=7"; do set -- $u; curl -sS -m 40 -A "$UA" -o "$1.xml" -w "$1 %{http_code} %{size_download} %{content_type}\n" "$2" >> st.txt 2>&1 || echo "$1 fail" >> st.txt; done
+          for u in "c1 https://www.tmd.go.th/uploads/CAP/en/CAPTMD20261011062839_2.xml" "c2 https://www.tmd.go.th/uploads/CAP/en/CAPTMD20261011062847_2.xml" "c1th https://www.tmd.go.th/uploads/CAP/th/CAPTMD20261011062839_2.xml" "capth https://www.tmd.go.th/api/xml/CAP"; do set -- $u; curl -sS -m 40 -A "$UA" -o "$1.xml" -w "$1 %{http_code} %{size_download} %{content_type}\n" "$2" >> st.txt 2>&1 || echo "$1 fail" >> st.txt; done
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
