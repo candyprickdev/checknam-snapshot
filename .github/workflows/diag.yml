@@ -14,10 +14,10 @@ jobs:
           const BASE='https://checknam.com/';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const out={};
-          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่','เพชรบุรี/เมืองเพชรบุรี','กาญจนบุรี/เมืองกาญจนบุรี','ฉะเชิงเทรา/เมืองฉะเชิงเทรา','กรุงเทพมหานคร/ลาดกระบัง']){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
+          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่','เชียงใหม่/เมืองเชียงใหม่']){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_zone',z);},z);
           pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
-          await pg.goto(BASE,{waitUntil:'domcontentloaded'});await W(80000);
+          await pg.goto(BASE,{waitUntil:'domcontentloaded'});await W(75000);await pg.evaluate(()=>document.querySelectorAll('.nw-d').forEach(d=>d.open=false));
           out[z]=await pg.evaluate(()=>{const rc=riskCore();return {snap:null,L:rc.L.name,score:rc.score,mx:rc.mx&&nm(rc.mx),p:rc.mx&&(+rc.mx.storage_percent).toFixed(1),how:rc.nearHow,warnSt:rc.warnSt,tw:rc.twTop&&[rc.twTop.name,rc.twTop.sev],f:rc.f.map(x=>x.t+': '+x.v+' ['+x.s+'] '+String(x.d).replace(/<[^>]+>/g,'').slice(0,160)),plain:plainBox(rc,true),news:NEWS&&{err:NEWS.err,am:(NEWS.am||[]).map(x=>x.s+' | '+x.t),pv:(NEWS.pv||[]).map(x=>x.s+' | '+x.t)},fh:FH[fhKey()]&&{rai:!!FH[fhKey()].rai,apid:FH[fhKey()].apid,tot:FH[fhKey()].tot,fr:FH[fhKey()].fr}};});
           const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('.ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
           const el=h.asElement(); if(el){await el.screenshot({path:z.split('/')[1]+'-h.png'});}
