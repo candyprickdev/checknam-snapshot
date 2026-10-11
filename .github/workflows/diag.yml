@@ -8,12 +8,17 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          UA='Mozilla/5.0 (compatible; checknam.com news reader; +https://checknam.com)'
-          curl -sL -m 25 -A "$UA" https://mgronline.com/ | grep -oE 'href="https://mgronline.com/[a-z]+"' | sort -u > w.txt
-          for x in index local politics crime qol around south northeast north east central breakingnews latest daily; do u=https://mgronline.com/store/rss/$x.xml; curl -sL -m 25 -A "$UA" -o "f_$x.xml" -w "$u %{http_code} %{size_download}\n" "$u" >> w.txt; done
-          for f in f_*.xml; do echo "== $f $(grep -o '<item' $f | wc -l) items; $(grep -o '<pubDate>[^<]*' $f | head -1) | $(grep -o '<pubDate>[^<]*' $f | tail -1)"; done >> w.txt
-          head -c 1500 f_local.xml >> w.txt
-          rm -f f_*.xml
+          npm i -s puppeteer-core@23 >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
+          for(const z of ['เพชรบุรี/เขาย้อย','ปราจีนบุรี/บ้านสร้าง']){const pg=await b.newPage();
+          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone',z);},z);
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(45000);
+          out[z]=await pg.evaluate(()=>({src:NEWS_SRC,news:NEWS&&{err:NEWS.err,am:(NEWS.am||[]).map(x=>x.s+' | '+x.t),pv:(NEWS.pv||[]).map(x=>x.s+' | '+x.t)}}));await pg.close();}
+          fs.writeFileSync('st.json',JSON.stringify(out,null,1));await b.close();})();
+          JS
+          node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
