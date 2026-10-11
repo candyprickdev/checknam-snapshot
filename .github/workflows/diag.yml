@@ -11,14 +11,9 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
-          const shot=async(name,setup,after)=>{const cx=await b.createBrowserContext();const pg=await cx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:390,height:844,deviceScaleFactor:2});
-           await pg.evaluateOnNewDocument(setup);await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,24000));
-           const r=await pg.evaluate(after);await pg.evaluate(()=>{const b=document.getElementById('ezBar');if(b)b.remove();scrollTo(0,0)});await pg.screenshot({path:name+'.png',clip:{x:0,y:0,width:390,height:1300}});out[name]={errs,r};await cx.close();};
-          const info=()=>{const rc=riskCore();const f=rc.f.find(x=>x.t==='ระดับน้ำใกล้เขต');return {zone:place,mx:rc.mx&&nm(rc.mx),how:rc.nearHow,n:rc.near.length,L:rc.L&&rc.L.name,lvl:f&&f.v,d:f&&f.d,floT:rc.floT,rd:(document.querySelector('#easy .ez-x .rd')||{}).innerText,say:(document.querySelector('.ez-say2')||{}).innerText,al:(document.querySelector('#alert')||{}).innerText,surr:(rc.f.find(x=>x.t==='จุดล้นตลิ่งรอบเขต')||{}).d}};
-          await shot('ic',()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_pin',JSON.stringify({la:13.7267,lo:100.5106}));localStorage.setItem('nbi_zone','__pin__');},info);
-          for(const [n,z] of [['ks','กรุงเทพมหานคร/คลองสาน'],['by','นนทบุรี/บางใหญ่'],['bp','กรุงเทพมหานคร/บางพลัด'],['tc','กรุงเทพมหานคร/ตลิ่งชัน'],['sn','พระนครศรีอยุธยา/เสนา']]) await shot(n,new Function(`localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_zone',${JSON.stringify(z)});`),info);
-          {const pg=await b.newPage();await pg.goto(S+'/',{waitUntil:'domcontentloaded',timeout:60000});await new Promise(r=>setTimeout(r,20000));out.zl=await pg.evaluate(()=>{const z=zoneLevels();return ZKEYS.map((k,i)=>[k,z.z[i]])});}
-          require('fs').writeFileSync('out.json',JSON.stringify(out));await b.close();})();
+          const pg=await b.newPage();await pg.goto(S+'/version.json',{waitUntil:'domcontentloaded',timeout:60000});
+          out.r=await pg.evaluate(async()=>{const R={};for(const [n,la,lo] of [['by',13.8443,100.4131],['ks',13.7267,100.5106],['cm',18.79,98.98],['hy',7.01,100.47]]){try{const r=await fetch('/api/tmd?lat='+la+'&lon='+lo);R[n]={s:r.status,b:(await r.text()).slice(0,2500)};}catch(e){R[n]=String(e)}}return R;});
+          require('fs').writeFileSync('out.json',JSON.stringify(out,null,1));await b.close();})();
           JS
           node t.js 2> err.txt || true
           rm -rf node_modules package*.json t.js
