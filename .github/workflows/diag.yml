@@ -18,9 +18,9 @@ jobs:
           (async()=>{const base={nbi_mode:'full',nbi_th:'light',nbi_zone:'นนทบุรี/บางใหญ่',nbi_zp_seen:'1'};
           const top=()=>{const n=document.querySelector('nav.zone');scrollTo(0,n.getBoundingClientRect().top+scrollY-12);};
           await run('a',base,[`(${top})()`,`document.getElementById('zhTg').click();(${top})()`,`document.getElementById('zpBtn').click()`]);
-          await run('b',{...base,nbi_pin:JSON.stringify({la:13.8616,lo:100.4062})},[`(${top})()`,`document.getElementById('zhTg').click()`]);
-          await run('c',{...base,nbi_zone:'กรุงเทพมหานคร/บางรัก'},[`(${top})()`]);
-          await run('e',{...base,nbi_mode:'easy'},[`scrollTo(0,0)`,`document.getElementById('ezPick').click()`]);
+
+
+
           await run('d',{...base,nbi_th:'dark'},[`(${top})()`,`document.getElementById('zhTg').click()`]);
           })();
           JS
