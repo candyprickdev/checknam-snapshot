@@ -10,10 +10,10 @@ concurrency:
   cancel-in-progress: false
 jobs:
   push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: snapshot
         env:
           KEY: ${{ secrets.SNAP_KEY }}
@@ -29,21 +29,26 @@ jobs:
           if [ "$FORCE" = true ] || [ -z "$DA" ] || [ "$DA" -ge 55 ]; then JOBS="$JOBS thailand_main"; fi
           RA=$(age rain_24h); if [ "$FORCE" = true ] || [ -z "$RA" ] || [ "$RA" -ge 9 ]; then JOBS="$JOBS rain_24h"; fi
           [ -z "$JOBS" ] && { echo "เครื่องที่บ้านเพิ่งส่งแล้ว ข้ามรอบนี้"; exit 0; }
-          FAIL=0
+          FAIL=0; UPFAIL=0
           for k in $JOBS; do
             CODE=$(curl -s -m 60 --retry 2 --retry-delay 5 -A "$UA" -o "t-$k.json" -w "%{http_code}" "$UP$k" || echo 000)
             SIZE=$( [ -f "t-$k.json" ] && wc -c < "t-$k.json" | tr -d ' ' || echo 0)
             if [ "$CODE" = 200 ] && [ "$SIZE" -gt 2000 ]; then
               if [ "$k" = thailand_main ]; then
-                node trim-dams.js "t-$k.json" t-dams.json || { echo "::warning::ตัดข้อมูลเขื่อนไม่สำเร็จ"; FAIL=1; continue; }
+                node trim-dams.js "t-$k.json" t-dams.json || { echo "::warning::ตัดข้อมูลเขื่อนไม่สำเร็จ"; UPFAIL=1; continue; }
                 RES=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/json" --data-binary "@t-dams.json" "https://checknam.com/api/snap?k=dams")
               else
                 # ตรวจรูปแบบ บีบอัด และแยกค่ารายชั่วโมงที่นี่ เว็บแค่เก็บ ไม่ต้องประมวลผลทั้งก้อน
-                node prep.js "$k" "t-$k.json" || { echo "::warning::$k รูปแบบข้อมูลไม่ถูกต้อง"; FAIL=1; continue; }
+                node prep.js "$k" "t-$k.json" || { echo "::warning::$k รูปแบบข้อมูลไม่ถูกต้อง"; UPFAIL=1; continue; }
                 RES=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/gzip" --data-binary "@t-$k.json.gz" "https://checknam.com/api/snap?k=$k&gz=1")
                 if [ -f "t-$k.json.h.json" ]; then HR=$(curl -s -m 60 -X POST -H "x-key: $KEY" -H "Content-Type: application/json" --data-binary "@t-$k.json.h.json" "https://checknam.com/api/snap?k=$k&h=1"); echo "$k hourly=$HR"; fi
               fi
               echo "$k src=$CODE size=$SIZE push=$RES"; case "$RES" in *'"ok":true'*) ;; *) FAIL=1;; esac
-            else echo "::warning::$k ดึงจากต้นทางไม่ได้ src=$CODE size=$SIZE"; FAIL=1; fi
+            else echo "::warning::$k ดึงจากต้นทางไม่ได้ src=$CODE size=$SIZE"; UPFAIL=1; fi
           done
+          # ต้นทางล่มหรือส่งข้อมูลเสียชั่วคราวไม่นับว่าล้ม (ไม่ส่งอีเมลทุก 5 นาที) นับว่าล้มเมื่อสำเนาระดับน้ำเก่าเกิน 60 นาทีแล้ว
+          if [ "$UPFAIL" = 1 ] && [ "$FAIL" = 0 ]; then
+            if [ -z "$WA" ] || [ "$WA" -ge 60 ]; then echo "::error::ต้นทางส่งข้อมูลไม่ได้ และสำเนาระดับน้ำเก่าเกิน 60 นาทีแล้ว (${WA:-?} นาที)"; exit 1; fi
+            echo "::warning::ต้นทางส่งข้อมูลไม่ได้รอบนี้ สำเนาเดิมยังใช้ได้ (${WA} นาที)"; exit 0
+          fi
           exit $FAIL
