@@ -9,7 +9,7 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';
+          const p=require('puppeteer-core');const S='https://checknam.com';
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const out={};
           const pg=await b.newPage();await pg.goto(S+'/version.json',{waitUntil:'domcontentloaded',timeout:60000});
           out.r=await pg.evaluate(async()=>{const R={};for(const [n,la,lo] of [['by',13.8443,100.4131],['ks',13.7267,100.5106],['cm',18.79,98.98],['hy',7.01,100.47]]){try{const r=await fetch('/api/tmd?lat='+la+'&lon='+lo);R[n]={s:r.status,b:(await r.text()).slice(0,2500)};}catch(e){R[n]=String(e)}}return R;});
