@@ -15,11 +15,12 @@ jobs:
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
           fs.writeFileSync('zs.txt',zs.join('\n'));
-          for(const z of ['นครปฐม/สามพราน','นราธิวาส/เจาะไอร้อง','ยะลา/เมืองยะลา']){const pg=await b.newPage();await pg.setViewport({width:430,height:900});
-          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone',z);},z);
-          pg.on('response',async r=>{if(r.url().includes('/api/tmdwarn')){try{fs.appendFileSync('w.txt',z+' '+r.status()+' '+(await r.text()).slice(0,300)+'\n');}catch(e){}}});
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(16000);
-          fs.appendFileSync('sw.txt',z+' '+(await pg.evaluate(()=>document.getElementById('twarn').innerText.replace(/\n/g,' | ').slice(0,200)))+'\n');await pg.close();}
+          {const pg=await b.newPage();await pg.setViewport({width:430,height:900});
+          await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_zone','ปราจีนบุรี/บ้านสร้าง');});
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(18000);
+          const r=await pg.evaluate(()=>{const rc=riskCore();const f=d=>({n:d.station.tele_station_name.th,river:d.river_name,p:+d.storage_percent,km:+km(d).toFixed(1),amp:d.geocode&&d.geocode.amphoe_name&&d.geocode.amphoe_name.th,old:d.station.tele_station_oldcode,t:d.waterlevel_datetime});
+            return {L:rc.L.name,score:rc.score,how:rc.nearHow,near:rc.near.map(f),mx:rc.mx?f(rc.mx):null,over:(rc.over||[]).slice(0,6).map(f),inR:(rc.inR||[]).filter(d=>km(d)<20).map(f),easy:document.getElementById('zLine')?.innerText,alert:document.getElementById('alert').innerText.slice(0,900)};});
+          fs.writeFileSync('bs.json',JSON.stringify(r,null,1));await pg.close();}
           await b.close();})();
 
           JS
