@@ -8,18 +8,16 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          curl -s -m 30 -A 'checknam.com (+https://checknam.com)' 'https://api-v3.thaiwater.net/api/v1/thaiwater30/public/warning' > warning.json || true
           npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
-          fs.writeFileSync('zs.txt',zs.join('\n'));
-          for(const z of ['ปราจีนบุรี/บ้านสร้าง']){const pg=await b.newPage();await pg.setViewport({width:430,height:900,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z);
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(70000);fs.writeFileSync('fhn.json',JSON.stringify(await pg.evaluate(async()=>{const k=fhKey();const z=await zbLoad();return {fhn:FHN[k],z:z&&{bb:z.bb,approx:z.approx},ap:FH[k]&&FH[k].ap};})));
-          const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('#easy .ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
-          await h.asElement().screenshot({path:z.split('/')[1]+'.png'});await pg.close();}
+          const pg=await b.newPage();await pg.evaluateOnNewDocument(()=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_zone','ปราจีนบุรี/บ้านสร้าง');});
+          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(60000);
+          const r=await pg.evaluate(()=>{const S=DATA.filter(d=>/ปราจีน|บางปะกง|นครนายก|ฉะเชิงเทรา/.test((d.river_name||'')+(d.geocode&&d.geocode.province_name&&d.geocode.province_name.th||''))).map(d=>({id:d.station.id,oc:d.station.tele_station_oldcode,n:d.station.tele_station_name&&d.station.tele_station_name.th,rv:d.river_name,bank:d.station.min_bank,gl:d.station.ground_level,crit:d.station.critical_level_msl,wl:d.waterlevel_msl,pct:d.storage_percent,ag:d.agency&&d.agency.agency_shortname&&d.agency.agency_shortname.en,t:d.waterlevel_datetime}));let rb=null;try{const P=PLACES[place];rb=riverBracket(P[1],P[2]);rb=rb&&{a:rb.a&&rb.a.station.tele_station_oldcode,b:rb.b&&rb.b.station.tele_station_oldcode,low:rb.low&&rb.low.station.tele_station_oldcode};}catch(e){rb=String(e)}return {S,rb};});
+          fs.writeFileSync('st.json',JSON.stringify(r,null,1));
+          const UA={headers:{'User-Agent':'checknam.com (+https://checknam.com)'}};
+          for(const s of r.S.filter(s=>/^kgt\.?(1|3)$|^kgt\.?1[05]|bpk/i.test(s.oc||''))){for(const [a,z] of [['2013-09-15','2013-10-20'],['2011-10-01','2011-11-15'],['2024-09-01','2024-10-31']]){try{const u='https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph?station_type=tele_waterlevel&station_id='+s.id+'&start_date='+a+'&end_date='+z;const t=await (await fetch(u,UA)).text();fs.appendFileSync('hist.txt',s.oc+' '+a+' '+t.slice(0,600)+'\n');}catch(e){fs.appendFileSync('hist.txt',s.oc+' err '+e+'\n');}await W(1500);}}
           await b.close();})();
 
           JS
