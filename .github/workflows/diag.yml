@@ -15,9 +15,9 @@ jobs:
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
           const j=JSON.parse(fs.readFileSync('warning.json','utf8'));const zs=[];for(const x of j.data.slice(0,3))for(const l of x.message.split(/\n+/)){const am=(/อ\.\s?(\S+)/.exec(l)||[])[1],pv=(/จ\.\s?(\S+)/.exec(l)||[])[1];if(am&&pv)zs.push(pv+'/'+am);}
           fs.writeFileSync('zs.txt',zs.join('\n'));
-          for(const [L,th,w] of [[4,'dark',1440]]){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:w,height:900,deviceScaleFactor:2});
+          for(const [L,th,w] of [[4,'dark',1440],[2,'dark',834]]){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:w,height:900,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument(t=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',t);localStorage.setItem('nbi_zone','นนทบุรี/บางใหญ่');},th);
-          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(15000);
+          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(35000);
           await pg.evaluate(L=>{const x=document.querySelector('#easy .ez-x');x.scrollIntoView();scrollBy(0,-40);let c=x.querySelector('canvas.ez-rn');if(!c){c=document.createElement('canvas');c.className='ez-rn';x.appendChild(c);}c.dataset.l=L;c.dataset.n=[5,22,34,52,68][L];c.dataset.dir=1;c.dataset.ws=12;if(RN){RN.stop();RN=null;}rainInit();},L);
           await W(1500);fs.writeFileSync('dbg.txt',JSON.stringify(await pg.evaluate(()=>{const c=document.querySelector('#easy canvas.ez-rn');const r=c.getBoundingClientRect();return {n:document.querySelectorAll('#easy canvas.ez-rn').length,w:c.width,h:c.height,r:[r.width,r.height],rn:!!RN,same:RN&&RN.cv===c,px:(()=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let s=0;for(let i=3;i<d.length;i+=4)s+=d[i];return s;})(),hid:document.hidden,vs:document.visibilityState,cs:getComputedStyle(c).display+' '+getComputedStyle(c).zIndex+' '+getComputedStyle(c).position};})));const el=await pg.$('#easy .ez-x');
           for(let i=0;i<10;i++){await el.screenshot({path:`r${L}-${String(i).padStart(2,'0')}.png`});await W(60);}
