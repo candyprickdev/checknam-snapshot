@@ -11,10 +11,10 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่']){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:1000,height:900});
+          for(const z of ['ปราจีนบุรี/บ้านสร้าง']){const pg=await b.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));await pg.setViewport({width:1000,height:900});
           await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','full');localStorage.setItem('nbi_th','dark');localStorage.setItem('nbi_zone',z);},z);
           await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(18000);
-          await pg.evaluate(()=>document.getElementById('s-map').scrollIntoView());await W(3000);
+          await pg.evaluate(()=>document.getElementById('s-map').scrollIntoView());await W(2000);await pg.evaluate(()=>{try{MAP.setZoom(12);}catch(e){}});await W(3000);
           const el=await pg.$('#map');await el.screenshot({path:z.split('/')[1]+'.png'});fs.appendFileSync('sw.txt',z+' '+JSON.stringify(errs)+'\n');await pg.close();}
           await b.close();})();
           JS
