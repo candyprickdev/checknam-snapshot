@@ -9,7 +9,7 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d; npm i -s puppeteer-core@23 >/dev/null 2>&1
           cat > t.js <<'JS'
-          const p=require('puppeteer-core');const S='https://stage.checknam.pages.dev';const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
+          const p=require('puppeteer-core');const S='https://checknam.com';const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           const chk=()=>{const cw=document.documentElement.clientWidth,sw=document.documentElement.scrollWidth;const bad=[];
           const clipped=e=>{for(let a=e.parentElement;a&&a!==document.body;a=a.parentElement){const s=getComputedStyle(a);if(/(hidden|auto|scroll|clip)/.test(s.overflowX)){const r=a.getBoundingClientRect();if(r.right<=cw+1)return true;}if(s.position==='fixed')return true;}return false;};
           document.querySelectorAll('body *').forEach(e=>{const s=getComputedStyle(e);if(s.display==='none'||s.visibility==='hidden'||s.position==='fixed')return;const r=e.getBoundingClientRect();if(r.width>0&&r.height>0&&(r.right>cw+1||r.left<-1)&&!clipped(e))bad.push(((e.id?'#'+e.id:'')+'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0]+'<'+e.tagName.toLowerCase()+'> L'+Math.round(r.left)+' R'+Math.round(r.right)));});
@@ -22,9 +22,9 @@ jobs:
           const info=await pg.evaluate(chk);fs.appendFileSync('info.txt',name+' '+w+': '+JSON.stringify(info)+' errs='+JSON.stringify(errs)+'\n');
           if(full)await pg.screenshot({path:`${name}-${w}.png`,fullPage:true});else await pg.screenshot({path:`${name}-${w}.png`});await pg.close();};
           const L={nbi_th:'light',nbi_zone:'นนทบุรี/บางใหญ่',nbi_zp_seen:'1'};
-          for(const [w,h] of [[1280,800],[1440,900],[1920,1080],[2560,1440]]) await go('full',S+'/',w,h,{...L,nbi_mode:'full'},w!==1280);
-          await go('easy',S+'/',2560,1440,{...L,nbi_mode:'easy'},true);
-          for(const [w,h] of [[844,390],[667,375],[932,430]]){await go('lsfull',S+'/',w,h,{...L,nbi_mode:'full'},false);await go('lseasy',S+'/',w,h,{...L,nbi_mode:'easy'},false);}
+          for(const [w,h] of [[667,375],[844,390],[390,844]]) await go('lseasy',S+'/',w,h,{...L,nbi_mode:'easy'},false);
+          for(const [w,h] of [[1280,800],[1920,1080],[360,740]]) await go('full',S+'/',w,h,{...L,nbi_mode:'full'},false);
+          await go('fullbkk',S+'/',1440,900,{...L,nbi_mode:'full',nbi_zone:'กรุงเทพมหานคร/บางรัก'},true);
           await b.close();})();
           JS
           node t.js 2> err.txt || true
