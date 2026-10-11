@@ -8,26 +8,11 @@ jobs:
       - run: |
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
-          npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cat > t.js <<'JS'
-          const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-          const BASE='https://checknam.com/';
-          (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          const out={};
-          for(const z of ['ปราจีนบุรี/บ้านสร้าง','นนทบุรี/บางใหญ่','เชียงใหม่/เมืองเชียงใหม่']){const pg=await b.newPage();await pg.setViewport({width:400,height:900,deviceScaleFactor:2});
-          await pg.evaluateOnNewDocument(z=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th','light');localStorage.setItem('nbi_zone',z);},z);
-          pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
-          await pg.goto(BASE,{waitUntil:'domcontentloaded'});await W(75000);await pg.evaluate(()=>document.querySelectorAll('.nw-d').forEach(d=>d.open=false));
-          out[z]=await pg.evaluate(()=>{const rc=riskCore();return {snap:null,L:rc.L.name,score:rc.score,mx:rc.mx&&nm(rc.mx),p:rc.mx&&(+rc.mx.storage_percent).toFixed(1),how:rc.nearHow,warnSt:rc.warnSt,tw:rc.twTop&&[rc.twTop.name,rc.twTop.sev],f:rc.f.map(x=>x.t+': '+x.v+' ['+x.s+'] '+String(x.d).replace(/<[^>]+>/g,'').slice(0,160)),plain:plainBox(rc,true),news:NEWS&&{err:NEWS.err,am:(NEWS.am||[]).map(x=>x.s+' | '+x.t),pv:(NEWS.pv||[]).map(x=>x.s+' | '+x.t)},fh:FH[fhKey()]&&{rai:!!FH[fhKey()].rai,apid:FH[fhKey()].apid,tot:FH[fhKey()].tot,fr:FH[fhKey()].fr}};});
-          const h=await pg.evaluateHandle(()=>[...document.querySelectorAll('.ez-box')].find(b=>/เทียบกับปีที่เคยท่วม/.test(b.textContent)));
-          const el=h.asElement(); if(el){await el.screenshot({path:z.split('/')[1]+'-h.png'});}
-          const nb=await pg.$('#ezNewsB'); if(nb) await (await nb.evaluateHandle(e=>e.parentElement)).asElement().screenshot({path:z.split('/')[1]+'-n.png'});
-          const fg=await pg.$('.ez-fg'); if(fg) await fg.screenshot({path:z.split('/')[1]+'-f.png'});
-          await pg.close();}
-          fs.writeFileSync('st.json',JSON.stringify(out,null,1));
-          await b.close();})();
-          JS
-          node t.js 2>> err.txt || true
+          UA='Mozilla/5.0 (compatible; checknam.com news reader; +https://checknam.com)'
+          for h in https://www.thairath.co.th/ https://www.thairath.co.th/news/local https://www.dailynews.co.th/ https://www.dailynews.co.th/regional/ https://mgronline.com/ https://mgronline.com/local https://mgronline.com/rss ; do echo "### $h" >> w.txt; curl -sL -m 25 -A "$UA" -D hd.txt -o pg.html -w "%{http_code} %{size_download}\n" "$h" >> w.txt; grep -i "^cf-mitigated\|^server:" hd.txt >> w.txt; grep -oiE '<link[^>]+(rss|atom)[^>]*>|href="[^"]*(rss|feed)[^"]*"' pg.html | sort -u | head -30 >> w.txt; done
+          for u in https://www.thairath.co.th/rss/news https://www.thairath.co.th/rss/news/local https://www.thairath.co.th/rss https://www.dailynews.co.th/feed/ https://www.dailynews.co.th/regional/feed/ https://www.dailynews.co.th/category/regional/feed/ https://www.dailynews.co.th/news/regional/feed/ https://mgronline.com/rss/local https://mgronline.com/rss/politics https://mgronline.com/rss/news https://mgronline.com/rss/latest https://mgronline.com/rss/onlinesection/local https://mgronline.com/rss/local.xml ; do n=$(echo $u | sed 's#https://##;s#[/.]#_#g'); curl -sL -m 25 -A "$UA" -o "f_$n.xml" -w "$u %{http_code} %{size_download} %{content_type}\n" "$u" >> w.txt || echo "$u fail" >> w.txt; done
+          for f in f_*.xml; do echo "== $f $(grep -o '<item' $f | wc -l) items; $(grep -o '<pubDate>[^<]*' $f | head -1) | $(grep -o '<pubDate>[^<]*' $f | tail -1)"; done >> w.txt
+          rm -f f_*.xml pg.html hd.txt
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diag-data
