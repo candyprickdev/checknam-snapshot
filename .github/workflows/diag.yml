@@ -12,7 +12,7 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const [z,th,hh] of [['ปราจีนบุรี/บ้านสร้าง','dark',10],['นนทบุรี/บางใหญ่','light',17.8],['กรุงเทพมหานคร/พระนคร','light',6.3],['เชียงใหม่/เมืองเชียงใหม่','dark',13]]){const pg=await b.newPage();await pg.setViewport({width:360,height:900,deviceScaleFactor:2});
+          for(const [z,th,hh] of [['ปราจีนบุรี/บ้านสร้าง','dark',10],['นนทบุรี/บางใหญ่','light',17.8],['กรุงเทพมหานคร/พระนคร','light',6.3],['แม่ฮ่องสอน/ปาย','dark',13]]){const pg=await b.newPage();await pg.setViewport({width:360,height:900,deviceScaleFactor:2});
           await pg.evaluateOnNewDocument((z,th,hh)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);const n0=Date.now(),d=new Date(n0+7*36e5),tgt=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-7*36e5+hh*36e5,off=tgt-n0;window.__pxOff=off;},z,th,hh);
           pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
           await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(45000);
