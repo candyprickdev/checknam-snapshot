@@ -12,11 +12,11 @@ jobs:
           cat > t.js <<'JS'
           const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
           (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-          for(const [z,th,hh] of [['ปราจีนบุรี/บ้านสร้าง','dark',10],['นนทบุรี/บางใหญ่','light',17.8],['กรุงเทพมหานคร/พระนคร','light',6.3],['แม่ฮ่องสอน/ปาย','dark',13]]){const pg=await b.newPage();await pg.setViewport({width:360,height:900,deviceScaleFactor:2});
+          for(const [z,th,hh,vw] of [['ปราจีนบุรี/บ้านสร้าง','dark',10,360],['นนทบุรี/บางใหญ่','light',17.8,430],['กรุงเทพมหานคร/พระนคร','light',6.3,360],['แม่ฮ่องสอน/ปาย','dark',13,1280]]){const pg=await b.newPage();await pg.setViewport({width:vw,height:900,deviceScaleFactor:vw>1000?1:2});
           await pg.evaluateOnNewDocument((z,th,hh)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);const n0=Date.now(),d=new Date(n0+7*36e5),tgt=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-7*36e5+hh*36e5,off=tgt-n0;window.__pxOff=off;},z,th,hh);
           pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
-          await pg.goto('https://checknam.com/',{waitUntil:'domcontentloaded'});await W(45000);
-          const el=await pg.$('#easy .ez-x'); if(el){await el.screenshot({path:z.split('/')[1]+'.png'});}
+          await pg.goto('https://stage.checknam.pages.dev/',{waitUntil:'domcontentloaded'});await W(45000);
+          const el=await pg.$('#easy'); if(el){const bb=await (await pg.$('#easy .ez-x')).boundingBox(); await pg.screenshot({path:z.split('/')[1]+'.png',clip:{x:0,y:Math.max(0,bb.y-10),width:pg.viewport().width,height:bb.height+150}});}
           fs.appendFileSync('txt.txt',z+' '+JSON.stringify(await pg.evaluate(()=>{const c=document.querySelector('#easy canvas.px');return c&&{...c.dataset,wx:!!document.querySelector('#easy .ez-wx'),rn:!!document.querySelector('#easy canvas.ez-rn')}}))+'\n');
           await pg.close();}
           await b.close();})();
