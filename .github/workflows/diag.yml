@@ -11,7 +11,7 @@ jobs:
           sudo apt-get install -y -qq fonts-thai-tlwg >/dev/null 2>&1 || true
           mkdir d; cd d
           npm i -s puppeteer-core@23 >/dev/null 2>&1
-          cp ../src/audit.js t.js
+          cp ../src/$(cat ../src/script.txt) t.js
           URL="$(cat ../src/url.txt)" node t.js 2>> err.txt || true
           rm -rf node_modules package*.json t.js
           git init -q . && git checkout -q -b diag-data && git add . && git -c user.name=diag -c user.email=diag@users.noreply.github.com commit -qm data
