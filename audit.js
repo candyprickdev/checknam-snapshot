@@ -1,7 +1,7 @@
 // ตรวจตัวหนังสือบนภาพลำน้ำ: ขนาด น้ำหนัก ระยะ และความต่างสี (WCAG) เทียบกับพื้นที่อยู่ข้างหลังจริง
 const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
 const URL=process.env.URL||'https://checknam.com/';
-const Z=[['นนทบุรี/บางใหญ่','light',1280],['ปราจีนบุรี/บ้านสร้าง','dark',360],['กรุงเทพมหานคร/พระนคร','dark',390],['แม่ฮ่องสอน/ปาย','light',390],['เชียงใหม่/เมืองเชียงใหม่','light',360]];
+const Z=[['นนทบุรี/บางใหญ่','light',390],['นนทบุรี/บางใหญ่','light',1280],['ปราจีนบุรี/บ้านสร้าง','dark',390],['กรุงเทพมหานคร/พระนคร','light',390],['แม่ฮ่องสอน/ปาย','light',390]];
 (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
 let i=0;for(const [z,th,vw] of Z){i++;try{const pg=await b.newPage();await pg.setViewport({width:vw,height:1000,deviceScaleFactor:2});
 await pg.evaluateOnNewDocument((z,th)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);},z,th);
