@@ -3,7 +3,7 @@ const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise
 const URL=process.env.URL||'https://checknam.com/';
 const Z=[['นนทบุรี/บางใหญ่','light',1280],['ปราจีนบุรี/บ้านสร้าง','dark',360],['แม่ฮ่องสอน/ปาย','light',390],['กรุงเทพมหานคร/พระนคร','dark',360],['นนทบุรี/บางใหญ่','light',360]];
 (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-let i=0;for(const [z,th,vw] of Z){i++;const pg=await b.newPage();await pg.setViewport({width:vw,height:1000,deviceScaleFactor:2});
+let i=0;for(const [z,th,vw] of Z){i++;try{const pg=await b.newPage();await pg.setViewport({width:vw,height:1000,deviceScaleFactor:2});
 await pg.evaluateOnNewDocument((z,th)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);},z,th);
 pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
 await pg.goto(URL,{waitUntil:'domcontentloaded'});await W(40000);
@@ -11,10 +11,10 @@ const tag=i+'-'+z.split('/')[1]+'-'+vw+'-'+th;
 const hx=await pg.$('#easy .ez-x');if(!hx){fs.appendFileSync('err.txt',tag+' no hero\n');continue;}
 await pg.evaluate(()=>{const e=document.querySelector('#easy .ez-x');window.scrollTo(0,e.getBoundingClientRect().top+scrollY-170);});await W(1200);
 const bb={};
-const bb1=await hx.boundingBox();const sy=await pg.evaluate(()=>scrollY);const clip={x:0,y:Math.max(0,bb1.y+sy-8),width:vw,height:Math.min(820,1000-bb1.y)};
+const bb1=await (await pg.$('#easy .ez-x')).boundingBox();const sy=await pg.evaluate(()=>scrollY);const clip={x:0,y:Math.max(0,bb1.y+sy-8),width:vw,height:Math.min(820,1000-bb1.y)};
 await pg.screenshot({path:tag+'.png',clip});
 // พื้นหลังจริงใต้ตัวหนังสือ: ซ่อนตัวหนังสือบนภาพแล้วถ่ายอีกรูป
-const SEL=['.rd b','.rd span','.ez-chip','.xs-g'];const bb2=await hx.boundingBox();Object.assign(bb,bb2);
+const SEL=['.rd b','.rd span','.ez-chip','.xs-g'];const bb2=await (await pg.$('#easy .ez-x')).boundingBox();Object.assign(bb,bb2);
 const rects=await pg.evaluate(S=>{const h=document.querySelector('#easy .ez-x');return S.map(s=>{const e=h.querySelector(s);if(!e)return null;const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {s,x:r.x,y:r.y,w:r.width,h:r.height,fs:c.fontSize,fw:c.fontWeight,lh:c.lineHeight,col:c.color,bg:c.backgroundColor,txt:e.textContent.trim().slice(0,40)}})},SEL);
 await pg.addStyleTag({content:'#easy .ez-x .rd *,#easy .ez-x .xs-g{color:transparent!important;text-shadow:none!important}#easy .ez-x .ez-chip *{visibility:hidden!important}'});await W(300);
 const bgshot=await pg.screenshot({encoding:'base64',clip:{x:bb.x,y:bb.y+sy,width:bb.width,height:bb.height}});
@@ -27,5 +27,5 @@ const below=await pg.evaluate(()=>{const lin=v=>{v/=255;return v<=.03928?v/12.92
 const bgOf=e=>{while(e){const c=getComputedStyle(e).backgroundColor;const a=P(c);if(a.length<4||a[3]>.9)return c;e=e.parentElement;}return getComputedStyle(document.body).backgroundColor;};
 return ['.ez-rkh span','.ez-rkh b','.ez-stn','.ez-stn b','.ez-wxn','.ez-say2','.ez-sc .l span','.ez-sc .l .on','.ez-fh2','.ez-fgt'].map(s=>{const e=document.querySelector('#easy '+s);if(!e)return {s,none:1};const c=getComputedStyle(e),bg=bgOf(e),a=L(P(c.color)),b=L(P(bg));const r=e.getBoundingClientRect();return {s,fs:c.fontSize,fw:c.fontWeight,lh:c.lineHeight,mt:c.marginTop,col:c.color,bg,cr:+((Math.max(a,b)+.05)/(Math.min(a,b)+.05)).toFixed(2),top:Math.round(r.top),h:Math.round(r.height),ov:e.scrollWidth>e.clientWidth+1?[e.scrollWidth,e.clientWidth]:0,w:Math.round(r.width)}});});
 fs.appendFileSync('audit.txt',tag+'\nON '+JSON.stringify(res)+'\nBELOW '+JSON.stringify(below)+'\n\n');
-await pg.close();}
+await pg.close();}catch(e){fs.appendFileSync('err.txt',z+' '+e+'\n');}}
 await b.close();})();
