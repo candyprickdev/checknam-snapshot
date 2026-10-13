@@ -1,5 +1,5 @@
 const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
-const URL=process.env.URL||'https://stage.checknam.pages.dev/';
+const URL=process.env.URL||'https://checknam.com/';
 (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
 for(const [z,th,vw,vh] of [['นนทบุรี/บางใหญ่','light',390,844],['นนทบุรี/บางใหญ่','dark',390,844],['นนทบุรี/บางใหญ่','light',1280,860]]){try{
 const pg=await b.newPage();await pg.setViewport({width:vw,height:vh,deviceScaleFactor:2});
