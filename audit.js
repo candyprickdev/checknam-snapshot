@@ -11,7 +11,7 @@ const tag=i+'-'+z.split('/')[1]+'-'+vw+'-'+th;
 const hx=await pg.$('#easy .ez-x');if(!hx){fs.appendFileSync('err.txt',tag+' no hero\n');continue;}
 await pg.evaluate(()=>{const e=document.querySelector('#easy .ez-x');window.scrollTo(0,e.getBoundingClientRect().top+scrollY-210);});await W(1200);
 const bb={};
-const bb1=await (await pg.$('#easy .ez-x')).boundingBox();const sy=await pg.evaluate(()=>scrollY);const clip={x:0,y:Math.max(0,bb1.y+sy-8),width:vw,height:Math.min(820,1000-bb1.y)};
+const bb1=await (await pg.$('#easy .ez-x')).boundingBox();const sy=await pg.evaluate(()=>scrollY);const clip={x:0,y:Math.max(0,bb1.y+sy-90),width:vw,height:Math.min(820,1000-bb1.y)};
 await pg.screenshot({path:tag+'.png',clip});
 // พื้นหลังจริงใต้ตัวหนังสือ: ซ่อนตัวหนังสือบนภาพแล้วถ่ายอีกรูป
 const SEL=['.rd b','.rd span','.ez-chip','.xs-g'];const bb2=await (await pg.$('#easy .ez-x')).boundingBox();Object.assign(bb,bb2);
