@@ -1,7 +1,7 @@
 // ตรวจตัวหนังสือบนภาพลำน้ำ: ขนาด น้ำหนัก ระยะ และความต่างสี (WCAG) เทียบกับพื้นที่อยู่ข้างหลังจริง
 const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
 const URL=process.env.URL||'https://checknam.com/';
-const Z=[['นนทบุรี/บางใหญ่','dark',360],['แม่ฮ่องสอน/ปาย','light',390],['เชียงใหม่/เมืองเชียงใหม่','light',1280],['กรุงเทพมหานคร/พระนคร','light',390]];
+const Z=[['นนทบุรี/บางใหญ่','dark',360],['นนทบุรี/บางใหญ่','light',1280],['ปราจีนบุรี/บ้านสร้าง','light',390]];
 (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
 let i=0;for(const [z,th,vw] of Z){i++;try{const pg=await b.newPage();await pg.setViewport({width:vw,height:1000,deviceScaleFactor:2});
 await pg.evaluateOnNewDocument((z,th)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);},z,th);
@@ -9,7 +9,7 @@ pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
 await pg.goto(URL,{waitUntil:'domcontentloaded'});await W(40000);
 const tag=i+'-'+z.split('/')[1]+'-'+vw+'-'+th;
 const hx=await pg.$('#easy .ez-x');if(!hx){fs.appendFileSync('err.txt',tag+' no hero\n');continue;}
-await pg.evaluate(()=>{const e=document.querySelector('#easy .ez-x');window.scrollTo(0,e.getBoundingClientRect().top+scrollY-170);});await W(1200);
+await pg.evaluate(()=>{const e=document.querySelector('#easy .ez-x');window.scrollTo(0,e.getBoundingClientRect().top+scrollY-210);});await W(1200);
 const bb={};
 const bb1=await (await pg.$('#easy .ez-x')).boundingBox();const sy=await pg.evaluate(()=>scrollY);const clip={x:0,y:Math.max(0,bb1.y+sy-8),width:vw,height:Math.min(820,1000-bb1.y)};
 await pg.screenshot({path:tag+'.png',clip});
