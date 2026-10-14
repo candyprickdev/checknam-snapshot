@@ -1,7 +1,7 @@
 const p=require('puppeteer-core');const fs=require('fs');const W=ms=>new Promise(r=>setTimeout(r,ms));
 const URL=process.env.URL||'https://stage.checknam.pages.dev/';
 (async()=>{const b=await p.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
-for(const [z,th,vw,vh,pin] of [['__pin__','dark',390,664,{la:13.856,lo:100.398}],['นนทบุรี/บางใหญ่','light',375,667,{la:0,lo:0}],['ปราจีนบุรี/บ้านสร้าง','light',390,664,{la:1,lo:1}]]){try{
+for(const [z,th,vw,vh,pin] of [['__pin__','dark',390,664,{la:13.856,lo:100.398}],['นนทบุรี/บางใหญ่','light',360,700,{la:0,lo:0}],['พระนครศรีอยุธยา/พระนครศรีอยุธยา','light',360,700,{la:1,lo:1}]]){try{
 const pg=await b.newPage();await pg.setViewport({width:vw,height:vh,deviceScaleFactor:2});
 await pg.evaluateOnNewDocument((z,th,pin)=>{localStorage.setItem('nbi_mode','easy');localStorage.setItem('nbi_th',th);localStorage.setItem('nbi_zone',z);localStorage.setItem('nbi_pin',JSON.stringify(pin));},z,th,pin);
 pg.on('pageerror',e=>fs.appendFileSync('err.txt',z+' '+e+'\n'));
